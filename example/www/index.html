@@ -1,27 +1,257 @@
 <!DOCTYPE html>
 <html>
 
-<body>
-    <script type="module">
-        import OpenScad from "./openscad.js";
+<head>
+  <script src="coi-serviceworker.js"></script>
+  <script src="three.min.js"></script>
+  <script src="Projector.js"></script>
+  <script src="stl_viewer.min.js"></script>
+  <script src="webgl_detector.js"></script>
+  <script src="OrbitControls.js"></script>
+  <script src="parser.min.js"></script>
+  <script src="TrackballControls.js"></script>
+  <script src="CanvasRenderer.js"></script>
 
-        function downloadFile(blob, fileName) {
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = fileName;
-            document.body.append(link);
-            link.click();
-            link.remove();
-        };
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" />
+
+  <link rel="stylesheet" data-name="vs/editor/editor.main"
+    href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/editor/editor.main.min.css">
+  <script>
+    var require = { paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs' } }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.nls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.js"></script>
+
+  <script type="module">
+    import OpenScad from "./openscad.js";
+    import { registerOpenSCADLanguage } from './openscad-editor-config.js'
+
+    const editorElement = document.getElementById('monacoEditor');
+    const sourceTextArea = document.getElementById('rawEditor');
+    const runButton = document.getElementById('run');
+    const resultElement = document.getElementById('result');
+    const metaElement = document.getElementById('meta');
+    const stlViewer = new StlViewer(document.getElementById("viewer"));
+    const linkContainerElement = document.getElementById('link-container');
+      
+    
+    function addDownloadLink(container, blob, fileName) {
+      const link = document.createElement('a');
+      link.innerText = fileName;
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      container.append(link);
+      return link;
+    }
+
+    async function execute(source) {
+      try {
+        runButton.disabled = true;
 
         const instance = await OpenScad({ noInitialRun: true });
 
-        instance.FS.writeFile("/input.scad", `cube(10);`);
-        instance.callMain(["/input.scad", "-o", "cube.stl"]);
-        const output = instance.FS.readFile("/cube.stl");
+        instance.FS.writeFile("/input.scad", source);//`cube(10);`);
+        instance.callMain(["/input.scad", "-o", "cube.stl", "--enable=fast-csg"]);
+        const output = await instance.FS.readFile("/cube.stl");
 
-        downloadFile(new Blob([output], { type: "application/octet-stream" }), "cube.stl");
-    </script>
+        runButton.disabled = false;
+
+        return output;
+      } catch (e) {
+        console.error(e);
+        return null;
+      }
+    }
+
+    stlViewer.model_loaded_callback = id => {
+      stlViewer.set_edges(id, true);
+    }
+
+    var editor;
+
+    async function runOpenSCAD() {
+      const source = getSource();
+      console.log('Source:\n' + source);
+
+      const output = await execute(source);
+
+      if (output) {
+        const fileName = "result.stl";
+        const blob = new Blob([output], { type: "application/octet-stream" });
+
+        try {
+          stlViewer.remove_model(1);
+        } catch (e) {
+          console.warn(e);
+        }
+        stlViewer.add_model({ id: 1, local_file: new File([blob], fileName) });
+        stlViewer.set_auto_resize(true);
+
+        metaElement.innerText = `${output.length} bytes`;
+        addDownloadLink(linkContainerElement, blob, fileName);
+      } else {
+        metaElement.innerText = `ERROR (please open the developer console for now)`;
+      }
+    }
+
+    runButton.onclick = runOpenSCAD;
+
+    function getSource() {
+      return editor ? editor.getValue() : sourceTextArea.value;
+    }
+    function onChange() {
+      window.location.hash = encodeURIComponent(getSource());
+      // runOpenSCAD();
+    }
+
+    const source = window.location.hash.startsWith('#') && window.location.hash.length > 1
+      ? decodeURIComponent(window.location.hash.substring(1))
+      : `cube(1);\ntranslate([0.5, 0.5, 0.5])\n  cube(1);`;
+
+    try {
+      await registerOpenSCADLanguage();
+
+      editor = monaco.editor.create(editorElement, {
+        value: source,
+        lineNumbers: false,
+        automaticLayout: true,
+        scrollBeyondLastLine: false,
+        fontSize: 12,
+        language: 'openscad',
+      });
+      editor.addAction({
+        id: "run-openscad",
+        label: "Run OpenSCAD",
+        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+        run: runOpenSCAD,
+      });
+      sourceTextArea.oninput = onChange;
+      editor.onDidChangeModelContent(onChange);
+      editor.focus();
+
+      sourceTextArea.style.display = 'none';
+    } catch (e) {
+      // console.warn(e);
+      console.error(e);
+      sourceTextArea.value = source;
+      editorElement.style.display = 'none';
+    }
+  </script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .root {
+      position: fixed;
+      left: 0;
+      top: 100;
+      width: 100%;
+      height: 100%;
+    }
+
+    #viewer {
+      min-height: 80vh;
+    }
+
+    #monacoEditor {
+      height: 100%;
+    }
+
+    #editor-panel,
+    #view-panel {
+      min-width: 40vw;
+      padding: 10px;
+      /* height: 100vh; */
+    }
+
+    #view-panel {
+      width: 70vw;
+    }
+
+    #editor-panel {
+      width: 30vw;
+    }
+
+    .row {
+      display: flex;
+      flex-direction: row;
+    }
+
+    .col {
+      display: flex;
+      flex-direction: column;
+    }
+
+    #monacoEditor,
+    #rawEditor {
+      flex-grow: 1;
+      /* min-height: 300px; min-width: 300px; */
+      height: 100%;
+      width: 100%;
+    }
+    #run {
+      padding: 5px;
+      margin-top: 5px;
+    }
+    .text {
+      padding: 5px 0 5px 0;
+    }
+    .text-fragment {
+      padding: 0 10px 0 10px;
+    }
+  </style>
+  <style>.github-fork-ribbon:before { background-color: #333; }</style>
+
+</head>
+
+<body>
+  <a class="github-fork-ribbon" href="https://github.com/ochafik/openscad-wasm" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+
+  <div class="root row">
+    <div id="editor-panel" class="col">
+      <div id="monacoEditor"></div>
+      <textarea id="rawEditor" cols="80" rows="30"></textarea>
+
+      <!-- A lil' bit of ads won't hurt -->
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5542613777217367"
+        crossorigin="anonymous"></script>
+      <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5542613777217367" data-ad-slot="7593884561"
+        data-ad-format="auto" data-full-width-responsive="true"></ins>
+      <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+      
+    </div>
+    <div id="view-panel" class="col">
+      <div class="text">
+        <h1>OpenSCAD Web Demo<sup style="color: red">ALPHA</sup></h1>
+      </div>
+      <div class="text">An ALPHA-quality demo that simply plugs
+        <a href="https://github.com/DSchroer/openscad-wasm">DSchroer's OpenSCAD WASM port</a>
+        with a <a href="https://github.com/microsoft/monaco-editor">Monaco Editor</a> (w/ custom OpenSCAD auto-completion)
+        and a <a href="https://github.com/omrips/viewstl">STL Viewer</a>
+      </div>
+      <span class="text">
+        <span class="text-fragment" style="padding-left: 0">
+          Licensed under the <a href="https://raw.githubusercontent.com/ochafik/openscad-wasm/master/COPYING">GPLv2</a>.
+        </span> | 
+        <a class="text-fragment" href="http://openscad.org/">OpenSCAD Home</a> |
+        <a class="text-fragment" href="http://openscad.org/cheatsheet/">Cheatsheet</a>
+      <div class="row text">
+        <button id="run">Run (Ctrl+Enter)</button>
+        &nbsp;
+        <div class="text-fragment" id="link-container"></div>
+        <div class="text-fragment" id="meta"></div>
+        
+      </div>
+      <div id="viewer" tabindex="0"></div>
+      <div class="text"></div>
+    </div>
+  </div>
+
 </body>
 
 </html>
