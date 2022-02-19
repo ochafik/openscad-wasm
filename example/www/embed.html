@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="origin-trial" content="Arj2cp+o02Jaw371iSeQfKSXWN8QtxKGsu8VKhKLZP3O4yWuw1wYh4logzlyDXWokqdMAH4UAkZrnmBIDDEFkAoAAAB1eyJvcmlnaW4iOiJodHRwczovL29jaGFmaWsuY29tOjQ0MyIsImZlYXR1cmUiOiJVbnJlc3RyaWN0ZWRTaGFyZWRBcnJheUJ1ZmZlciIsImV4cGlyeSI6MTY1ODg3OTk5OSwiaXNTdWJkb21haW4iOnRydWV9">
+  <meta name="viewport" content="width=device-width">
+  
+  <link rel="preload" href="openscad.js" as="script">
+  <link rel="preload" href="openscad.wasm" as="script">
+  <link rel="preload" href="openscad.worker.js" as="script">
+
+  <script>
+    if (!('SharedArrayBuffer' in window)) {
+      const script = document.createElement('script');
+      script.src = "coi-serviceworker.js";
+      document.head.append(script);
+    }
+  </script>
+  <script src="three.min.js" defer></script>
+  <script src="stl_viewer.min.js" defer></script>
+  <script src="webgl_detector.js" defer></script>
+  <script src="OrbitControls.js" defer></script>
+  <script src="parser.min.js" defer></script>
+  <!-- <script src="Projector.js"></script> -->
+  <!-- <script src="TrackballControls.js"></script> -->
+  <!-- <script src="CanvasRenderer.js"></script> -->
+
+  <script type="module" defer>
+    import OpenScad from "./openscad.js";
+    import { readStateFromFragment } from './state.js'
+    
+    const {source: {name, content}, camera} = readStateFromFragment() || {
+      source: {
+        content: 'cube(1);\ntranslate([0.5, 0.5, 0.5])\n\tcube(1);',
+      }
+    };
+
+    const instance = await OpenScad({ noInitialRun: true });
+    
+    const inputName = name;
+    const outputName = "out.stl";
+    instance.FS.writeFile("/" + inputName, content);
+    instance.callMain(["/" + inputName, "-o", "/" + outputName, "--enable=fast-csg"]);
+    const output = await instance.FS.readFile("/" + outputName);
+    const blob = new Blob([output], { type: "application/octet-stream" });
+
+    const stlViewer = new StlViewer(document.getElementById("viewer"));
+    stlViewer.model_loaded_callback = id => {
+      // stlViewer.set_edges(id, true);
+      stlViewer.set_color(id, '#f9d72c');
+    };
+    stlViewer.add_model({ id: 1, local_file: new File([blob], outputName) });
+    stlViewer.set_auto_resize(true);
+    if (camera) {
+      stlViewer.set_camera_state(camera);
+    }
+  </script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    #viewer {
+      position: fixed;
+      left: 0;
+      top: 100;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="viewer" tabindex="0"></div>
+</body>
+
+</html>
