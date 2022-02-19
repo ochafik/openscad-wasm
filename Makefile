@@ -100,3 +100,12 @@ libs/mpfr-4.1.0:
 	wget  https://www.mpfr.org/mpfr-current/mpfr-4.1.0.tar.xz
 	tar xf mpfr-4.1.0.tar.xz -C libs
 	rm mpfr-4.1.0.tar.xz
+
+build/site-dist.zip: build/openscad.js
+	mkdir -p dist/openscad
+	cp build/openscad.* dist/openscad
+	cp example/www/* dist/openscad
+	( cd dist && zip -r ../build/site-dist.zip openscad )
+	ls -l build/site-dist.zip
+
+site: build/site-dist.zip
