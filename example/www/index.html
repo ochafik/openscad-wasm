@@ -2,7 +2,14 @@
 <html>
 
 <head>
-  <script src="coi-serviceworker.js"></script>
+  <meta http-equiv="origin-trial" content="Arj2cp+o02Jaw371iSeQfKSXWN8QtxKGsu8VKhKLZP3O4yWuw1wYh4logzlyDXWokqdMAH4UAkZrnmBIDDEFkAoAAAB1eyJvcmlnaW4iOiJodHRwczovL29jaGFmaWsuY29tOjQ0MyIsImZlYXR1cmUiOiJVbnJlc3RyaWN0ZWRTaGFyZWRBcnJheUJ1ZmZlciIsImV4cGlyeSI6MTY1ODg3OTk5OSwiaXNTdWJkb21haW4iOnRydWV9">
+  <script>
+    if (!('SharedArrayBuffer' in window)) {
+      const script = document.createElement('script');
+      script.src = "coi-serviceworker.js";
+      document.head.append(script);
+    }
+  </script>
   <script src="three.min.js"></script>
   <script src="Projector.js"></script>
   <script src="stl_viewer.min.js"></script>
@@ -11,7 +18,7 @@
   <script src="parser.min.js"></script>
   <script src="TrackballControls.js"></script>
   <script src="CanvasRenderer.js"></script>
-
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" />
 
   <link rel="stylesheet" data-name="vs/editor/editor.main"
@@ -22,122 +29,18 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.nls.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.js"></script>
+  <!-- <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-  <script type="module">
-    import OpenScad from "./openscad.js";
-    import { registerOpenSCADLanguage } from './openscad-editor-config.js'
-
-    const editorElement = document.getElementById('monacoEditor');
-    const sourceTextArea = document.getElementById('rawEditor');
-    const runButton = document.getElementById('run');
-    const resultElement = document.getElementById('result');
-    const metaElement = document.getElementById('meta');
-    const stlViewer = new StlViewer(document.getElementById("viewer"));
-    const linkContainerElement = document.getElementById('link-container');
-      
-    
-    function addDownloadLink(container, blob, fileName) {
-      const link = document.createElement('a');
-      link.innerText = fileName;
-      link.href = URL.createObjectURL(blob);
-      link.download = fileName;
-      container.append(link);
-      return link;
-    }
-
-    async function execute(source) {
-      try {
-        runButton.disabled = true;
-
-        const instance = await OpenScad({ noInitialRun: true });
-
-        instance.FS.writeFile("/input.scad", source);//`cube(10);`);
-        instance.callMain(["/input.scad", "-o", "cube.stl", "--enable=fast-csg"]);
-        const output = await instance.FS.readFile("/cube.stl");
-
-        runButton.disabled = false;
-
-        return output;
-      } catch (e) {
-        console.error(e);
-        return null;
-      }
-    }
-
-    stlViewer.model_loaded_callback = id => {
-      stlViewer.set_edges(id, true);
-    }
-
-    var editor;
-
-    async function runOpenSCAD() {
-      const source = getSource();
-      console.log('Source:\n' + source);
-
-      const output = await execute(source);
-
-      if (output) {
-        const fileName = "result.stl";
-        const blob = new Blob([output], { type: "application/octet-stream" });
-
-        try {
-          stlViewer.remove_model(1);
-        } catch (e) {
-          console.warn(e);
-        }
-        stlViewer.add_model({ id: 1, local_file: new File([blob], fileName) });
-        stlViewer.set_auto_resize(true);
-
-        metaElement.innerText = `${output.length} bytes`;
-        addDownloadLink(linkContainerElement, blob, fileName);
-      } else {
-        metaElement.innerText = `ERROR (please open the developer console for now)`;
-      }
-    }
-
-    runButton.onclick = runOpenSCAD;
-
-    function getSource() {
-      return editor ? editor.getValue() : sourceTextArea.value;
-    }
-    function onChange() {
-      window.location.hash = encodeURIComponent(getSource());
-      // runOpenSCAD();
-    }
-
-    const source = window.location.hash.startsWith('#') && window.location.hash.length > 1
-      ? decodeURIComponent(window.location.hash.substring(1))
-      : `cube(1);\ntranslate([0.5, 0.5, 0.5])\n  cube(1);`;
-
-    try {
-      await registerOpenSCADLanguage();
-
-      editor = monaco.editor.create(editorElement, {
-        value: source,
-        lineNumbers: false,
-        automaticLayout: true,
-        scrollBeyondLastLine: false,
-        fontSize: 12,
-        language: 'openscad',
-      });
-      editor.addAction({
-        id: "run-openscad",
-        label: "Run OpenSCAD",
-        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-        run: runOpenSCAD,
-      });
-      sourceTextArea.oninput = onChange;
-      editor.onDidChangeModelContent(onChange);
-      editor.focus();
-
-      sourceTextArea.style.display = 'none';
-    } catch (e) {
-      // console.warn(e);
-      console.error(e);
-      sourceTextArea.value = source;
-      editorElement.style.display = 'none';
-    }
-  </script>
+    ga('create', '{{ site.google_analytics }}', 'auto');
+    ga('send', 'pageview');
+  </script> -->
+  <script type="text/javascript" id="cookiebanner"
+    src="https://cdnjs.cloudflare.com/ajax/libs/cookie-banner/1.2.2/cookiebanner.min.js"></script>
+  <script type="module" src="main.js"></script>
   <style>
     body {
       margin: 0;
@@ -188,19 +91,25 @@
     #monacoEditor,
     #rawEditor {
       flex-grow: 1;
-      /* min-height: 300px; min-width: 300px; */
-      height: 100%;
       width: 100%;
     }
-    #run {
+    #run, #kill {
       padding: 5px;
       margin-top: 5px;
+    }
+    .button {
+      margin-right: 10px;
     }
     .text {
       padding: 5px 0 5px 0;
     }
     .text-fragment {
       padding: 0 10px 0 10px;
+      align-self: center;
+    }
+    .logs-container {
+      overflow-y: scroll;
+      height: calc(min(200px, 30vh));
     }
   </style>
   <style>.github-fork-ribbon:before { background-color: #333; }</style>
@@ -213,16 +122,18 @@
   <div class="root row">
     <div id="editor-panel" class="col">
       <div id="monacoEditor"></div>
-      <textarea id="rawEditor" cols="80" rows="30"></textarea>
+      <div class="logs-container">
+        <pre><code id="logs"></code></pre>
+      </div>
 
       <!-- A lil' bit of ads won't hurt -->
-      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5542613777217367"
+      <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5542613777217367"
         crossorigin="anonymous"></script>
       <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5542613777217367" data-ad-slot="7593884561"
         data-ad-format="auto" data-full-width-responsive="true"></ins>
       <script>
         (adsbygoogle = window.adsbygoogle || []).push({});
-      </script>
+      </script> -->
       
     </div>
     <div id="view-panel" class="col">
@@ -241,8 +152,11 @@
         <a class="text-fragment" href="http://openscad.org/">OpenSCAD Home</a> |
         <a class="text-fragment" href="http://openscad.org/cheatsheet/">Cheatsheet</a>
       <div class="row text">
-        <button id="run">Run (Ctrl+Enter)</button>
-        &nbsp;
+        <button class="button" id="run">Render (Ctrl+Enter)</button>
+        <button class="button" id="kill" disabled>🚫</button>
+        <span class="text-fragment"><input type="checkbox" id="autorender" style="">Auto-render</span>
+        <span class="spacer"></span>
+        <span style="flex-grow: 1;"></span>
         <div class="text-fragment" id="link-container"></div>
         <div class="text-fragment" id="meta"></div>
         
