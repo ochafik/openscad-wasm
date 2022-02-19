@@ -1,4 +1,4 @@
-import { spawnOpenSCAD } from './openscad-runner.js'
+import { createWasmMemory, spawnOpenSCAD } from './openscad-runner.js'
 // import OpenScad from "./openscad.js";
 import { registerOpenSCADLanguage } from './openscad-editor-config.js'
 import { writeStateInFragment, readStateFromFragment} from './state.js'
@@ -15,10 +15,32 @@ const showExperimentalFeaturesCheckbox = document.getElementById('show-experimen
 const stlViewerElement = document.getElementById("viewer");
 const logsElement = document.getElementById("logs");
 const featuresContainer = document.getElementById("features");
+const maximumMegabytesInput = document.getElementById("maximum-megabytes");
 
 const featureCheckboxes = {};
 
-const stlViewer = new StlViewer(stlViewerElement);
+var persistCameraState = false; // If one gets too far, it's really hard to auto reset and can be confusing to users. Just restart.
+var stlViewer;
+var stlFile;
+
+function buildStlViewer() {
+  const stlViewer = new StlViewer(stlViewerElement);
+  // const initialCameraState = stlViewer.get_camera_state();
+  stlViewer.model_loaded_callback = id => {
+    stlViewer.set_color(id, '#f9d72c');
+    stlViewer.set_auto_zoom(true);
+    stlViewer.set_auto_resize(true);
+    // stlViewer.set_edges(id, true);
+    // onStateChanged({allowRun: false});
+  };    
+  return stlViewer;
+}
+
+function viewStlFile() {
+  try { stlViewer.remove_model(1); } catch (e) {}
+  stlViewer.add_model({ id: 1, local_file: stlFile });
+}
+// stlViewer.set_auto_zoom(true);
 
 function addDownloadLink(container, blob, fileName) {
   const link = document.createElement('a');
@@ -27,6 +49,13 @@ function addDownloadLink(container, blob, fileName) {
   link.download = fileName;
   container.append(link);
   return link;
+}
+
+function formatMillis(n) {
+  if (n < 1000) {
+    return `${Math.floor(n / 1000)} sec`;
+  }
+  return `${Math.floor(n / 100) / 10} sec`;
 }
 
 let lastJob;
@@ -99,7 +128,7 @@ function processMergedOutputs(editor, mergedOutputs, timestamp) {
         continue;
       }
     }
-    unmatchedLines.push(stderr ?? stdout ?? error);
+    unmatchedLines.push(stderr ?? stdout ?? `EXCEPTION: ${error}`);
   }
   if (errorCount || warningCount) unmatchedLines = [`${errorCount} errors, ${warningCount} warnings!`, '', ...unmatchedLines];
   logsElement.innerText = unmatchedLines.join("\n")
@@ -107,123 +136,126 @@ function processMergedOutputs(editor, mergedOutputs, timestamp) {
   monaco.editor.setModelMarkers(editor.getModel(), 'openscad', markers);
 }
 
-var lastSyntaxCheck;
-async function checkSyntax() {
+const syntaxDelay = 300;
+const checkSyntax = turnIntoDelayableExecution(syntaxDelay, () => {
   const source = editor.getValue();
   const timestamp = Date.now();
 
-  if (lastSyntaxCheck) lastSyntaxCheck.kill();
-  lastSyntaxCheck = spawnOpenSCAD({
+  const job = spawnOpenSCAD({
     inputs: [['/input.scad', source + '\n']],
     args: ["/input.scad", "-o", "out.ast"],
   });
 
-  try {
-    const result = await lastSyntaxCheck;
-    console.log(result);
-    processMergedOutputs(editor, result.mergedOutputs, timestamp);
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-async function execute() {
-  const source = editor.getValue();
-  try {
-    const timestamp = Date.now();
-    metaElement.innerText = 'rendering...';
-    metaElement.title = null;
-
-    if (lastJob) lastJob.kill();
-    lastJob = spawnOpenSCAD({
-      inputs: [['/input.scad', source]],
-      args: [
-        "/input.scad",
-        "-o", "out.stl",
-        ...Object.keys(featureCheckboxes).filter(f => featureCheckboxes[f].checked).map(f => `--enable=${f}`),
-      ],
-      outputPaths: ['/out.stl']
-    });
-
-    runButton.disabled = true;
-    setExecuting(true);
-    try {
-      const result = await lastJob;
-      console.log(result);
-      if (result.error) {
-        throw result.error;
+  return {
+    kill: () => job.kill(),
+    completion: (async () => {
+      try {
+        const result = await job;
+        console.log(result);
+        processMergedOutputs(editor, result.mergedOutputs, timestamp);
+      } catch (e) {
+        console.error(e);
       }
-
-      processMergedOutputs(editor, result.mergedOutputs, timestamp);
-
-      function formatMillis(n) {
-        if (n < 1000) {
-          return `${Math.floor(n / 10) / 100} sec`;
-        }
-        return `${Math.floor(n / 100) / 10} sec`;
-      }
-      metaElement.innerText = formatMillis(result.elapsedMillis);
-      metaElement.title = null;
-      // \nExit code: ${result.exitCode}
-
-      const [output] = result.outputs;
-      if (!output) throw 'No output from runner!'
-      const [path, content] = output;
-      return content;
-
-    } catch (e) {
-      console.error(e, e.stack);
-      metaElement.innerText = '<failed>';
-      metaElement.title = e.toString();
-    } finally {
-      setExecuting(false);
-      runButton.disabled = false;
-    }
-    // const instance = await OpenScad({ noInitialRun: true });
-    // instance.FS.writeFile("/input.scad", source);//`cube(10);`);
-    // instance.callMain(["/input.scad", "-o", "cube.stl", "--enable=fast-csg"]);
-    // const output = await instance.FS.readFile("/cube.stl");
-
-    return null;
-  } catch (e) {
-    console.error(e);
-    return null;
-  }
-}
-
-stlViewer.model_loaded_callback = id => {
-  // stlViewer.set_edges(id, true);
-  stlViewer.set_color(id, '#f9d72c');
-  stlViewer.set_auto_zoom(true);
-}
+    })()
+  };
+});
 
 var sourceFileName;
 var editor;
 
-async function render() {
-  const output = await execute();
+function turnIntoDelayableExecution(delay, createJob) {
+  var pendingId;
+  var runningJobKillSignal;
 
-  if (output) {
-    const fileName = "result.stl";
-    const blob = new Blob([output], { type: "application/octet-stream" });
-
-    try {
-      stlViewer.remove_model(1);
-    } catch (e) {
-      console.warn(e);
+  const doExecute = async () => {
+    if (runningJobKillSignal) {
+      runningJobKillSignal();
+      runningJobKillSignal = null;
     }
-    stlViewer.add_model({ id: 1, local_file: new File([blob], fileName) });
-    stlViewer.set_auto_resize(true);
-
-    // metaElement.innerText = `${output.length} bytes`;
-    linkContainerElement.innerHTML = '';
-    addDownloadLink(linkContainerElement, blob, fileName);
+    const {kill, completion} = createJob();
+    runningJobKillSignal = kill;
+    try {
+      await completion;
+    } finally {
+      runningJobKillSignal = null;
+    }
   }
+  return async ({now}) => {
+    if (pendingId) {
+      clearTimeout(pendingId);
+      pendingId = null;
+    }
+    if (now) {
+      doExecute();
+    } else {
+      pendingId = setTimeout(doExecute, delay);
+    }
+  };
 }
 
-runButton.onclick = render;
+var renderDelay = 1000;
+const render = turnIntoDelayableExecution(renderDelay, () => {
+  const source = editor.getValue();
+  const timestamp = Date.now();
+  metaElement.innerText = 'rendering...';
+  metaElement.title = null;
+  runButton.disabled = true;
+  setExecuting(true);
+  
+  const job = spawnOpenSCAD({
+    wasmMemory,
+    inputs: [['/input.scad', source]],
+    args: [
+      "/input.scad",
+      "-o", "out.stl",
+      ...Object.keys(featureCheckboxes).filter(f => featureCheckboxes[f].checked).map(f => `--enable=${f}`),
+    ],
+    outputPaths: ['/out.stl']
+  });
+
+  return {
+    kill: () => job.kill(),
+    completion: (async () => {
+      try {
+        const result = await job;
+        console.log(result);
+        processMergedOutputs(editor, result.mergedOutputs, timestamp);
+  
+        if (result.error) {
+          throw result.error;
+        }
+  
+        metaElement.innerText = formatMillis(result.elapsedMillis);
+        
+        const [output] = result.outputs;
+        if (!output) throw 'No output from runner!'
+        const [fileName, content] = output;
+
+        // TODO: have the runner accept and return files.
+        const blob = new Blob([content], { type: "application/octet-stream" });
+        // console.log(new TextDecoder().decode(content));
+        stlFile = new File([blob], fileName);
+
+        viewStlFile(stlFile);
+
+        linkContainerElement.innerHTML = '';
+        addDownloadLink(linkContainerElement, blob, fileName);
+      } catch (e) {
+        console.error(e, e.stack);
+        metaElement.innerText = '<failed>';
+        metaElement.title = e.toString();
+      } finally {
+        setExecuting(false);
+        runButton.disabled = false;
+      }
+    })()
+  }
+});
+
+runButton.onclick = () => render({now: true});
 
 function getState() {
+  const features = Object.keys(featureCheckboxes).filter(f => featureCheckboxes[f].checked);
   return {
     source: {
       name: sourceFileName,
@@ -231,9 +263,10 @@ function getState() {
     },
     autorender: autorenderCheckbox.checked,
     autoparse: autoparseCheckbox.checked,
-    features: Object.keys(featureCheckboxes).filter(f => featureCheckboxes[f].checked),
-    showExp: showExperimentalFeaturesCheckbox.checked,
-    camera: stlViewer.get_camera_state()
+    maximumMegabytes: Number(maximumMegabytesInput.value),
+    features,
+    showExp: features.length > 0 || showExperimentalFeaturesCheckbox.checked,
+    camera: persistCameraState ? stlViewer.get_camera_state() : null,
   };
 }
 
@@ -258,22 +291,45 @@ const defaultState = {
   source: {
     name: 'input.stl',
     content: 'cube(1);\ntranslate([0.5, 0.5, 0.5])\n\tcube(1);',
-  }
+  },
+  maximumMegabytes: 1024,
+  // maximumMegabytes: 512,
 };
+
+var wasmMemory;
+var lastMaximumMegabytes;
+function setMaximumMegabytes(maximumMegabytes) {
+  if (!wasmMemory || (lastMaximumMegabytes != maximumMegabytes)) {
+    wasmMemory = createWasmMemory({maximumMegabytes});
+    lastMaximumMegabytes = maximumMegabytes;
+  }
+}
+
+function updateExperimentalCheckbox(temptativeChecked) {
+  const features = Object.keys(featureCheckboxes).filter(f => featureCheckboxes[f].checked);
+  const hasFeatures = features.length > 0;
+  showExperimentalFeaturesCheckbox.checked = hasFeatures || (temptativeChecked ?? showExperimentalFeaturesCheckbox.checked);
+  showExperimentalFeaturesCheckbox.disabled = hasFeatures;
+}
 
 function setState(state) {
   editor.setValue(state.source.content);
   sourceFileName = state.source.name || 'input.scad';
-  if (state.camera) {
+  if (state.camera && persistCameraState) {
     stlViewer.set_camera_state(state.camera);
   }
+  let features = new Set();
   if (state.features) {
-    const features = new Set(state.features);
+    features = new Set(state.features);
     Object.keys(featureCheckboxes).forEach(f => featureCheckboxes[f].checked = features.has(f));
   }
   autorenderCheckbox.checked = state.autorender ?? true;
   autoparseCheckbox.checked = state.autoparse ?? true;
-  showExperimentalFeaturesCheckbox.checked = state.showExp ?? true;
+  updateExperimentalCheckbox(state.showExp ?? false);
+
+  const maximumMegabytes = state.maximumMegabytes ?? defaultState.maximumMegabytes;
+  setMaximumMegabytes(maximumMegabytes);
+  maximumMegabytesInput.value = maximumMegabytes;
 }
 
 var previousNormalizedState;
@@ -289,16 +345,19 @@ function onStateChanged({allowRun}) {
     
     if (allowRun) {
       if (autoparseCheckbox.checked) {
-        checkSyntax();
+        checkSyntax({now: false});
       }
       if (autorenderCheckbox.checked) {
-        render();
+        render({now: false});
       }
     }
   }
 }
 
 function pollCameraChanges() {
+  if (!persistCameraState) {
+    return;
+  }
   let lastCam;
   setInterval(function() {
     const ser = JSON.stringify(stlViewer.get_camera_state());
@@ -324,10 +383,19 @@ try {
     id: "run-openscad",
     label: "Run OpenSCAD",
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-    run: render,
+    run: () => render({now: true}),
   });
 
+  stlViewer = buildStlViewer();
   // stlViewerElement.onclick = () => stlViewerElement.focus();
+  // stlViewerElement.ondblclick = () => {
+  //   try { stlViewer.remove_model(1); } catch (e) {}
+  //   try { stlViewer.dispose(); } catch (e) {}
+    
+  //   stlViewer = buildStlViewer();
+  //   viewStlFile();
+  // };
+  
   stlViewerElement.onkeydown = e => {
     if (e.key === "Escape" || e.key === "Esc") editor.focus();
   };
@@ -335,13 +403,20 @@ try {
   const initialState = readStateFromFragment() || defaultState;
   
   setState(initialState);
-  await buildFeatureCheckboxes(featuresContainer, featureCheckboxes, () => onStateChanged({allowRun: true}));
+  await buildFeatureCheckboxes(featuresContainer, featureCheckboxes, () => {  
+    updateExperimentalCheckbox();
+    onStateChanged({allowRun: true});
+  });
   setState(initialState);
   
   showExperimentalFeaturesCheckbox.onchange = () => onStateChanged({allowRun: false});
 
   autorenderCheckbox.onchange = () => onStateChanged({allowRun: autorenderCheckbox.checked});
   autoparseCheckbox.onchange = () => onStateChanged({allowRun: autoparseCheckbox.checked});
+  maximumMegabytesInput.oninput = () => {
+    setMaximumMegabytes(Number(maximumMegabytesInput.value));
+    onStateChanged({allowRun: true});
+  };
   
   editor.focus();
 

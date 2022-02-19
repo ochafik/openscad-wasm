@@ -1,3 +1,15 @@
+export function createWasmMemory({maximumMegabytes, maximumBytes}) {
+  const pageSize = 64 * 1024; // 64KB
+  if (!maximumBytes) {
+    maximumBytes = maximumMegabytes * 1024 * 1024;
+  }
+  return new WebAssembly.Memory({
+    initial: Math.floor(maximumBytes / 2 / pageSize),
+    maximum: Math.floor(maximumBytes / pageSize),
+    shared: true,
+  });
+}
+
 // Output is {outputs: [name, content][], mergedOutputs: [{(stderr|stdout|error)?: string}], exitCode: number}
 export function spawnOpenSCAD({inputs, args, outputPaths}) {
   var worker;

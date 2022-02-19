@@ -2,12 +2,13 @@ import OpenScad from "./openscad.js";
 
 
 addEventListener('message', async (e) => {
-  const {inputs, args, outputPaths} = e.data;
+  const {inputs, args, outputPaths, wasmMemory} = e.data;
 
   const mergedOutputs = [];
   try {
-    
     const instance = await OpenScad({
+      wasmMemory,
+      buffer: wasmMemory && wasmMemory.buffer,
       noInitialRun: true,
       'print': text => {
         // console.log('stdout: ' + text);
