@@ -117,7 +117,7 @@
 </head>
 
 <body>
-  <a class="github-fork-ribbon" href="https://github.com/ochafik/openscad-wasm" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+  <a class="github-fork-ribbon" href="https://github.com/ochafik/openscad-wasm/tree/editor-ochafik.com" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
 
   <div class="root row">
     <div id="editor-panel" class="col">
@@ -146,15 +146,16 @@
         and a <a href="https://github.com/omrips/viewstl">STL Viewer</a>
       </div>
       <span class="text">
-        <span class="text-fragment" style="padding-left: 0">
+        <a class="text-fragment" style="padding-left: 0" href="http://openscad.org/">OpenSCAD Home</a> |
+        <a class="text-fragment" href="http://openscad.org/cheatsheet/">Cheatsheet</a> |
+        <span class="text-fragment">
           Licensed under the <a href="https://raw.githubusercontent.com/ochafik/openscad-wasm/master/COPYING">GPLv2</a>.
-        </span> | 
-        <a class="text-fragment" href="http://openscad.org/">OpenSCAD Home</a> |
-        <a class="text-fragment" href="http://openscad.org/cheatsheet/">Cheatsheet</a>
+        </span> 
+        
       <div class="row text">
         <button class="button" id="run">Render (Ctrl+Enter)</button>
         <button class="button" id="kill" disabled>🚫</button>
-        <span class="text-fragment"><input type="checkbox" id="autorender" style="">Auto-render</span>
+        <span class="text-fragment"><input type="checkbox" id="autorender" checked>Auto-render</span>
         <span class="spacer"></span>
         <span style="flex-grow: 1;"></span>
         <div class="text-fragment" id="link-container"></div>

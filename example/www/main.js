@@ -233,7 +233,7 @@ function setState(state) {
   if (state.camera) {
     stlViewer.set_camera_state(state.camera);
   }
-  autorenderCheckbox.checked = state.autorender;
+  autorenderCheckbox.checked = state.autorender ?? true;
 }
 
 var previousNormalizedState;
