@@ -111,6 +111,13 @@
       overflow-y: scroll;
       height: calc(min(200px, 30vh));
     }
+    #features {
+      position: fixed;
+      bottom: 0;
+    }
+    .spacer {
+      flex-grow: 1;
+    }
   </style>
   <style>.github-fork-ribbon:before { background-color: #333; }</style>
 
@@ -155,15 +162,19 @@
       <div class="row text">
         <button class="button" id="run">Render (Ctrl+Enter)</button>
         <button class="button" id="kill" disabled>🚫</button>
-        <span class="text-fragment"><input type="checkbox" id="autorender" checked>Auto-render</span>
-        <span class="spacer"></span>
-        <span style="flex-grow: 1;"></span>
+        
         <div class="text-fragment" id="link-container"></div>
         <div class="text-fragment" id="meta"></div>
+
+        <span class="spacer"></span>
+
+        <span class="text-fragment"><input type="checkbox" id="autorender" checked>Auto-render</span>
+        <span class="text-fragment"><input type="checkbox" id="show-experimental">Show experimental features<sup>BETA</sup></span>
         
       </div>
       <div id="viewer" tabindex="0"></div>
       <div class="text"></div>
+      <span id="features"></span>
     </div>
   </div>
 

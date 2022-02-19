@@ -2,6 +2,7 @@ import { spawnOpenSCAD } from './openscad-runner.js'
 // import OpenScad from "./openscad.js";
 import { registerOpenSCADLanguage } from './openscad-editor-config.js'
 import { writeStateInFragment, readStateFromFragment} from './state.js'
+import { buildFeatureCheckboxes } from './features.js';
 
 const editorElement = document.getElementById('monacoEditor');
 const runButton = document.getElementById('run');
@@ -9,8 +10,12 @@ const killButton = document.getElementById('kill');
 const metaElement = document.getElementById('meta');
 const linkContainerElement = document.getElementById('link-container');
 const autorenderCheckbox = document.getElementById('autorender');
+const showExperimentalFeaturesCheckbox = document.getElementById('show-experimental');
 const stlViewerElement = document.getElementById("viewer");
 const logsElement = document.getElementById("logs");
+const featuresContainer = document.getElementById("features");
+
+const featureCheckboxes = {};
 
 const stlViewer = new StlViewer(stlViewerElement);
 
@@ -129,7 +134,11 @@ async function execute() {
     if (lastJob) lastJob.kill();
     lastJob = spawnOpenSCAD({
       inputs: [['/input.scad', source]],
-      args: ["/input.scad", "-o", "out.stl", "--enable=fast-csg"],
+      args: [
+        "/input.scad",
+        "-o", "out.stl",
+        ...Object.keys(featureCheckboxes).filter(f => featureCheckboxes[f].checked).map(f => `--enable=${f}`),
+      ],
       outputPaths: ['/out.stl']
     });
 
@@ -140,6 +149,15 @@ async function execute() {
       console.log(result);
 
       processMergedOutputs(editor, result.mergedOutputs, timestamp);
+
+      function formatMillis(n) {
+        if (n < 1000) {
+          return `${Math.floor(n / 10) / 100} sec`;
+        }
+        return `${Math.floor(n / 100) / 10} sec`;
+      }
+      metaElement.innerText = `Render: ${formatMillis(result.elapsedMillis)}`;
+      // \nExit code: ${result.exitCode}
 
       if (result.error) {
         console.error(result.error);
@@ -193,11 +211,11 @@ async function render() {
     stlViewer.add_model({ id: 1, local_file: new File([blob], fileName) });
     stlViewer.set_auto_resize(true);
 
-    metaElement.innerText = `${output.length} bytes`;
+    // metaElement.innerText = `${output.length} bytes`;
     linkContainerElement.innerHTML = '';
     addDownloadLink(linkContainerElement, blob, fileName);
   } else {
-    metaElement.innerText = `<error>`;
+    metaElement.innerText = '';
   }
 }
 
@@ -210,6 +228,8 @@ function getState() {
       content: editor.getValue(),
     },
     autorender: autorenderCheckbox.checked,
+    features: Object.keys(featureCheckboxes).filter(f => featureCheckboxes[f].checked),
+    showExp: showExperimentalFeaturesCheckbox.checked,
     camera: stlViewer.get_camera_state()
   };
 }
@@ -244,13 +264,20 @@ function setState(state) {
   if (state.camera) {
     stlViewer.set_camera_state(state.camera);
   }
+  if (state.features) {
+    const features = new Set(state.features);
+    Object.keys(featureCheckboxes).forEach(f => featureCheckboxes[f].checked = features.has(f));
+  }
   autorenderCheckbox.checked = state.autorender ?? true;
+  showExperimentalFeaturesCheckbox.checked = state.showExp ?? true;
 }
 
 var previousNormalizedState;
 function onStateChanged({allowRun}) {
   const newState = getState();
   writeStateInFragment(newState);
+
+  featuresContainer.style.display = showExperimentalFeaturesCheckbox.checked ? null : 'none';
 
   const normalizedState = normalizeState(newState);
   if (JSON.stringify(previousNormalizedState) != JSON.stringify(normalizedState)) {
@@ -294,26 +321,28 @@ try {
     run: render,
   });
 
-  setState(readStateFromFragment() || defaultState);
   editor.onDidChangeModelContent(() => {
     onStateChanged({allowRun: true});
   });
 
+  // stlViewerElement.onclick = () => stlViewerElement.focus();
+  stlViewerElement.onkeydown = e => {
+    if (e.key === "Escape" || e.key === "Esc") editor.focus();
+  };
+  
   autorenderCheckbox.onchange = () => onStateChanged({allowRun: true});
 
+  await buildFeatureCheckboxes(featuresContainer, featureCheckboxes, () => onStateChanged({allowRun: true}));
+
+  setState(readStateFromFragment() || defaultState);
+  
+  showExperimentalFeaturesCheckbox.onchange = () => onStateChanged({allowRun: false});
+  
   editor.focus();
 
   pollCameraChanges();
-
   onStateChanged({allowRun: true});
 
-  // var myWorker = new Worker('openscad-worker.js', {'type': 'module'});
-  // spawnOpenSCAD({
-  //   inputs: ['/input.scad', 'cube();'],
-  //   args: ["/input.scad", "-o", "out.stl", "--enable=fast-csg"],
-  //   outputPaths: ['/out.stl']
-  // })
 } catch (e) {
-  // console.warn(e);
   console.error(e);
 }

@@ -19,16 +19,21 @@ addEventListener('message', async (e) => {
       },
     });
 
-    for (const [path, content] of inputs) {
-      instance.FS.writeFile(path, content);
+    if (inputs) {
+      for (const [path, content] of inputs) {
+        instance.FS.writeFile(path, content);
+      }
     }
     console.log('Calling main ', args)
+    const start = performance.now();
     const exitCode = instance.callMain(args);
-
+    const end = performance.now();
+    
     const result = {
       outputs: outputPaths && await Promise.all(outputPaths.map(path => [path, instance.FS.readFile(path)])),
       mergedOutputs,
       exitCode,
+      elapsedMillis: end - start
     }
 
     console.log(result);
