@@ -37,6 +37,7 @@ function setExecuting(v) {
 }
 
 var lastProcessedOutputsTimestamp;
+
 function processMergedOutputs(editor, mergedOutputs, timestamp) {
   if (lastProcessedOutputsTimestamp != null && timestamp < lastProcessedOutputsTimestamp) {
     // We have slow (render) and fast (syntax check) runs running concurrently.
@@ -49,6 +50,16 @@ function processMergedOutputs(editor, mergedOutputs, timestamp) {
 
   const markers = [];
   let warningCount = 0, errorCount = 0;
+  const addError = (error, file, line) => {
+    markers.push({
+      startLineNumber: Number(line),
+      startColumn: 1,
+      endLineNumber: Number(line),
+      endColumn: 1000,
+      message: error,
+      severity: monaco.MarkerSeverity.Error
+    })
+  }
   for (const {stderr, stdout, error} of mergedOutputs){
     if (stderr) {
       if (stderr.startsWith('ERROR:')) errorCount++;
@@ -57,18 +68,18 @@ function processMergedOutputs(editor, mergedOutputs, timestamp) {
       let m = /^ERROR: Parser error in file "([^"]+)", line (\d+): (.*)$/.exec(stderr)
       if (m) {
         const [_, file, line, error] = m
-        markers.push({
-          startLineNumber: Number(line),
-          startColumn: 1,
-          endLineNumber: Number(line),
-          endColumn: 1000,
-          message: error,
-          severity: monaco.MarkerSeverity.Error
-        })
+        addError(error, file, line);
         continue;
       }
 
-      m = /^WARNING: (.*?), in file ([^,]+), line (\d+)\./.exec(stderr);
+      m = /^ERROR: Parser error: (.*?) in file ([^",]+), line (\d+)$/.exec(stderr)
+      if (m) {
+        const [_, error, file, line] = m
+        addError(error, file, line);
+        continue;
+      }
+
+      m = /^WARNING: (.*?),? in file ([^,]+), line (\d+)\.?/.exec(stderr);
       if (m) {
         const [_, warning, file, line] = m
         markers.push({
