@@ -10,6 +10,7 @@ const killButton = document.getElementById('kill');
 const metaElement = document.getElementById('meta');
 const linkContainerElement = document.getElementById('link-container');
 const autorenderCheckbox = document.getElementById('autorender');
+const autoparseCheckbox = document.getElementById('autoparse');
 const showExperimentalFeaturesCheckbox = document.getElementById('show-experimental');
 const stlViewerElement = document.getElementById("viewer");
 const logsElement = document.getElementById("logs");
@@ -130,6 +131,8 @@ async function execute() {
   const source = editor.getValue();
   try {
     const timestamp = Date.now();
+    metaElement.innerText = 'rendering...';
+    metaElement.title = null;
 
     if (lastJob) lastJob.kill();
     lastJob = spawnOpenSCAD({
@@ -147,6 +150,9 @@ async function execute() {
     try {
       const result = await lastJob;
       console.log(result);
+      if (result.error) {
+        throw result.error;
+      }
 
       processMergedOutputs(editor, result.mergedOutputs, timestamp);
 
@@ -156,21 +162,19 @@ async function execute() {
         }
         return `${Math.floor(n / 100) / 10} sec`;
       }
-      metaElement.innerText = `Render: ${formatMillis(result.elapsedMillis)}`;
+      metaElement.innerText = formatMillis(result.elapsedMillis);
+      metaElement.title = null;
       // \nExit code: ${result.exitCode}
 
-      if (result.error) {
-        console.error(result.error);
-      } else {
+      const [output] = result.outputs;
+      if (!output) throw 'No output from runner!'
+      const [path, content] = output;
+      return content;
 
-        const [output] = result.outputs;
-        if (output) {
-          const [path, content] = output;
-          return content;
-        }
-      }
     } catch (e) {
       console.error(e, e.stack);
+      metaElement.innerText = '<failed>';
+      metaElement.title = e.toString();
     } finally {
       setExecuting(false);
       runButton.disabled = false;
@@ -214,8 +218,6 @@ async function render() {
     // metaElement.innerText = `${output.length} bytes`;
     linkContainerElement.innerHTML = '';
     addDownloadLink(linkContainerElement, blob, fileName);
-  } else {
-    metaElement.innerText = '';
   }
 }
 
@@ -228,6 +230,7 @@ function getState() {
       content: editor.getValue(),
     },
     autorender: autorenderCheckbox.checked,
+    autoparse: autoparseCheckbox.checked,
     features: Object.keys(featureCheckboxes).filter(f => featureCheckboxes[f].checked),
     showExp: showExperimentalFeaturesCheckbox.checked,
     camera: stlViewer.get_camera_state()
@@ -241,13 +244,13 @@ function normalizeSource(src) {
     .replaceAll(/\s+/gm, ' ')
     .trim()
 }
-function normalizeState(state) {
+function normalizeStateForCompilation(state) {
   return {
     ...state,
     source: {
       ...state.source,
       content: normalizeSource(state.source.content)
-    }
+    },
   }
 }
 
@@ -269,6 +272,7 @@ function setState(state) {
     Object.keys(featureCheckboxes).forEach(f => featureCheckboxes[f].checked = features.has(f));
   }
   autorenderCheckbox.checked = state.autorender ?? true;
+  autoparseCheckbox.checked = state.autoparse ?? true;
   showExperimentalFeaturesCheckbox.checked = state.showExp ?? true;
 }
 
@@ -279,12 +283,14 @@ function onStateChanged({allowRun}) {
 
   featuresContainer.style.display = showExperimentalFeaturesCheckbox.checked ? null : 'none';
 
-  const normalizedState = normalizeState(newState);
+  const normalizedState = normalizeStateForCompilation(newState);
   if (JSON.stringify(previousNormalizedState) != JSON.stringify(normalizedState)) {
     previousNormalizedState = normalizedState;
     
     if (allowRun) {
-      checkSyntax();
+      if (autoparseCheckbox.checked) {
+        checkSyntax();
+      }
       if (autorenderCheckbox.checked) {
         render();
       }
@@ -321,27 +327,30 @@ try {
     run: render,
   });
 
-  editor.onDidChangeModelContent(() => {
-    onStateChanged({allowRun: true});
-  });
-
   // stlViewerElement.onclick = () => stlViewerElement.focus();
   stlViewerElement.onkeydown = e => {
     if (e.key === "Escape" || e.key === "Esc") editor.focus();
   };
+
+  const initialState = readStateFromFragment() || defaultState;
   
-  autorenderCheckbox.onchange = () => onStateChanged({allowRun: true});
-
+  setState(initialState);
   await buildFeatureCheckboxes(featuresContainer, featureCheckboxes, () => onStateChanged({allowRun: true}));
-
-  setState(readStateFromFragment() || defaultState);
+  setState(initialState);
   
   showExperimentalFeaturesCheckbox.onchange = () => onStateChanged({allowRun: false});
+
+  autorenderCheckbox.onchange = () => onStateChanged({allowRun: autorenderCheckbox.checked});
+  autoparseCheckbox.onchange = () => onStateChanged({allowRun: autoparseCheckbox.checked});
   
   editor.focus();
 
   pollCameraChanges();
   onStateChanged({allowRun: true});
+
+  editor.onDidChangeModelContent(() => {
+    onStateChanged({allowRun: true});
+  });
 
 } catch (e) {
   console.error(e);
