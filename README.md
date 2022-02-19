@@ -1,5 +1,7 @@
 # OpenSCAD WASM Port
 
+**Fork** of https://github.com/DSchroer/openscad-wasm with a https://github.com/microsoft/monaco-editor (+ custom language snippets) and https://github.com/omrips/viewstl for https://ochafik.com/openscad
+
 A full port of OpenSCAD to WASM. 
 
 This project cross compiles all of the project dependencies and created a headless OpenSCAD WASM module.
