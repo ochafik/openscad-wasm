@@ -24,7 +24,11 @@ export function spawnOpenSCAD({inputs, args, outputPaths}) {
   }
     
   const promise = new Promise((resolve, reject) => {
-    worker = new Worker('./openscad-worker.js', {'type': 'module'});
+    if (navigator.userAgent.indexOf(' Chrome/') < 0) {
+      worker = new Worker('./openscad-worker-firefox.js'); // {'type': 'module'}
+    } else {
+      worker = new Worker('./openscad-worker.js', {'type': 'module'});
+    }
     rejection = reject;
     worker.onmessage = e => {
       resolve(e.data);

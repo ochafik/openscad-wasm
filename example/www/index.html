@@ -4,10 +4,8 @@
 <head>
   <meta http-equiv="origin-trial" content="Arj2cp+o02Jaw371iSeQfKSXWN8QtxKGsu8VKhKLZP3O4yWuw1wYh4logzlyDXWokqdMAH4UAkZrnmBIDDEFkAoAAAB1eyJvcmlnaW4iOiJodHRwczovL29jaGFmaWsuY29tOjQ0MyIsImZlYXR1cmUiOiJVbnJlc3RyaWN0ZWRTaGFyZWRBcnJheUJ1ZmZlciIsImV4cGlyeSI6MTY1ODg3OTk5OSwiaXNTdWJkb21haW4iOnRydWV9">
   <script>
-    if (!('SharedArrayBuffer' in window)) {
-      const script = document.createElement('script');
-      script.src = "coi-serviceworker.js";
-      document.head.append(script);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./coi-serviceworker.js');
     }
   </script>
   <script src="three.min.js"></script>
