@@ -5,22 +5,34 @@ clean:
 	rm -rf build
 
 test:
-	cd tests; deno test --allow-read --allow-write
+	cd tests; deno test --allow-read --allow-write --jobs 4
 
 .PHONY: example
 example:
 	cd example; deno run --allow-net --allow-read server.ts
 
-build/openscad.js: build
-	docker run --name tmpcpy openscad-wasm
-	docker cp tmpcpy:/build/openscad.js build
-	docker cp tmpcpy:/build/openscad.worker.js build
-	docker cp tmpcpy:/build/openscad.wasm build
+ENV=Release
+ifeq ($(strip $(ENV)),Debug)
+DOCKER_FLAGS= --build-arg CMAKE_BUILD_TYPE=Debug --build-arg EMXX_FLAGS="-gsource-map --source-map-base=/"
+endif
+
+.PHONY: build
+build: build/openscad.js
+
+build/openscad.js: build/.image
+	docker run --name tmpcpy openscad
+	docker cp tmpcpy:/build .
 	docker rm tmpcpy
 
-build: libs
-	docker build libs -f Dockerfile --target openscad -t openscad-wasm
+build/.image: build/.base-image
+	docker build libs/openscad -f Dockerfile -t openscad ${DOCKER_FLAGS}
 	mkdir -p build
+	touch $@
+
+build/.base-image: libs
+	docker build libs -f Dockerfile.base -t openscad-base
+	mkdir -p build
+	touch $@
 
 libs: libs/cgal \
 	libs/eigen \
