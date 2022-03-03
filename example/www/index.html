@@ -108,6 +108,12 @@
     .logs-container {
       overflow-y: scroll;
       height: calc(min(200px, 30vh));
+      position: relative;
+    }
+    .deep-link {
+      position: absolute;
+      top: 5px;
+      right: 5px;
     }
     #features {
       position: fixed;
@@ -129,6 +135,7 @@
       <div id="monacoEditor"></div>
       <div class="logs-container">
         <pre><code id="logs"></code></pre>
+        <!-- <div class="deep-link"><button id="copy-link">Copy a link to this model</button></div> -->
       </div>
 
       <!-- A lil' bit of ads won't hurt -->
@@ -148,7 +155,13 @@
       <div class="text">An ALPHA-quality demo that simply plugs
         <a href="https://github.com/DSchroer/openscad-wasm">DSchroer's OpenSCAD WASM port</a>
         with a <a href="https://github.com/microsoft/monaco-editor">Monaco Editor</a> (w/ custom OpenSCAD auto-completion)
-        and a <a href="https://github.com/omrips/viewstl">STL Viewer</a>
+        and an <a href="https://github.com/omrips/viewstl">STL Viewer</a>
+      </div>
+      <div>
+        <b style="color: red">WARNING: </b>
+        Most models currently crash, <a href="https://github.com/DSchroer/openscad-wasm/issues/2" target="_blank">please help us</a> if you'd like to!
+        (here's a <a target="_blank" href="https://ochafik.com/openscad/#%7B%22source%22%3A%7B%22name%22%3A%22input.stl%22%2C%22content%22%3A%22%2F%2F%20intersection.scad%20-%20Example%20for%20intersection()%20usage%20in%20OpenSCAD%5Cn%5Cnecho(version%3Dversion())%3B%5Cn%5Cnmodule%20example_intersection()%5Cn%7B%5Cn%5Ctintersection()%20%7B%5Cn%5Ct%5Ctdifference()%20%7B%5Cn%5Ct%5Ct%5Ctunion()%20%7B%5Cn%5Ct%5Ct%5Ct%5Ctcube(%5B30%2C%2030%2C%2030%5D%2C%20center%20%3D%20true)%3B%5Cn%5Ct%5Ct%5Ct%5Cttranslate(%5B0%2C%200%2C%20-25%5D)%5Cn%5Ct%5Ct%5Ct%5Ct%5Ctcube(%5B15%2C%2015%2C%2050%5D%2C%20center%20%3D%20true)%3B%5Cn%5Ct%5Ct%5Ct%7D%5Cn%5Ct%5Ct%5Ctunion()%20%7B%5Cn%5Ct%5Ct%5Ct%5Ctcube(%5B50%2C%2010%2C%2010%5D%2C%20center%20%3D%20true)%3B%5Cn%5Ct%5Ct%5Ct%5Ctcube(%5B10%2C%2050%2C%2010%5D%2C%20center%20%3D%20true)%3B%5Cn%5Ct%5Ct%5Ct%5Ctcube(%5B10%2C%2010%2C%2050%5D%2C%20center%20%3D%20true)%3B%5Cn%5Ct%5Ct%5Ct%7D%5Cn%5Ct%5Ct%7D%5Cn%5Ct%5Cttranslate(%5B0%2C%200%2C%205%5D)%5Cn%5Ct%5Ct%5Ctcylinder(h%20%3D%2050%2C%20r1%20%3D%2020%2C%20r2%20%3D%205%2C%20center%20%3D%20true)%3B%5Cn%5Ct%7D%5Cn%7D%5Cn%5Cnexample_intersection()%3B%5Cn%5Cn%5Cn%5Cn%2F%2F%20Written%20by%20Clifford%20Wolf%20%3Cclifford%40clifford.at%3E%20and%20Marius%5Cn%2F%2F%20Kintel%20%3Cmarius%40kintel.net%3E%5Cn%2F%2F%5Cn%2F%2F%20To%20the%20extent%20possible%20under%20law%2C%20the%20author(s)%20have%20dedicated%20all%5Cn%2F%2F%20copyright%20and%20related%20and%20neighboring%20rights%20to%20this%20software%20to%20the%5Cn%2F%2F%20public%20domain%20worldwide.%20This%20software%20is%20distributed%20without%20any%5Cn%2F%2F%20warranty.%5Cn%2F%2F%5Cn%2F%2F%20You%20should%20have%20received%20a%20copy%20of%20the%20CC0%20Public%20Domain%5Cn%2F%2F%20Dedication%20along%20with%20this%20software.%5Cn%2F%2F%20If%20not%2C%20see%20%3Chttp%3A%2F%2Fcreativecommons.org%2Fpublicdomain%2Fzero%2F1.0%2F%3E.%5Cn%5Cn%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22%7D%2C%22autorender%22%3Atrue%2C%22autoparse%22%3Atrue%2C%22maximumMegabytes%22%3A1024%2C%22features%22%3A%5B%5D%2C%22showExp%22%3Atrue%2C%22camera%22%3Anull%7D">
+          more complex example</a> that does work)
       </div>
       <span class="text">
         <a class="text-fragment" style="padding-left: 0" href="http://openscad.org/">OpenSCAD Home</a> |
