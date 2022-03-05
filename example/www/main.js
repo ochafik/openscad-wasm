@@ -16,12 +16,31 @@ const stlViewerElement = document.getElementById("viewer");
 const logsElement = document.getElementById("logs");
 const featuresContainer = document.getElementById("features");
 const maximumMegabytesInput = document.getElementById("maximum-megabytes");
+const copyLinkButton = document.getElementById("copy-link");
 
 const featureCheckboxes = {};
 
 var persistCameraState = false; // If one gets too far, it's really hard to auto reset and can be confusing to users. Just restart.
 var stlViewer;
 var stlFile;
+
+if (copyLinkButton) {
+  copyLinkButton.onclick = async () => {
+    const result = await navigator.permissions.query({name: "clipboard-write"});
+    if (result.state == "granted" || result.state == "prompt") {
+      try {
+        // const serviceUrl = `https://is.gd/create.php?format=simple&url=${encodeURIComponent(location.href)}`;
+        // const serviceUrl = 'https://is.gd/create.php?format=simple&url=https://www.example.com';
+        const fetchUrl = '/shorten?url=' + encodeURIComponent(location.href);
+        const url = await (await fetch(fetchUrl)).text();
+        console.log('url', url)
+        navigator.clipboard.writeText(url);
+      } catch (e) {
+        console.error("Failed to create the url", e);
+      }
+    }
+  };
+}
 
 function buildStlViewer() {
   const stlViewer = new StlViewer(stlViewerElement);
@@ -294,6 +313,7 @@ const defaultState = {
   },
   maximumMegabytes: 1024,
   // maximumMegabytes: 512,
+  features: ['fast-csg', 'fast-csg-trust-corefinement'],
 };
 
 var wasmMemory;
