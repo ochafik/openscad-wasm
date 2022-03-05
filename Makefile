@@ -9,6 +9,7 @@ test:
 
 .PHONY: example
 example:
+	deno run --allow-net --allow-read --allow-write generate-openscad-worker-firefox.ts
 	cd example; deno run --allow-net --allow-read server.ts
 
 ENV=Release
