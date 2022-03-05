@@ -313,7 +313,7 @@ const defaultState = {
   },
   maximumMegabytes: 1024,
   // maximumMegabytes: 512,
-  features: ['fast-csg', 'fast-csg-trust-corefinement'],
+  features: ['fast-csg', 'fast-csg-trust-corefinement', 'lazy-union'],
 };
 
 var wasmMemory;
