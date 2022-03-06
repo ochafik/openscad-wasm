@@ -1,3 +1,6 @@
+DOCKER_TAG_BASE ?= openscad-base
+DOCKER_TAG_OPENSCAD ?= openscad
+
 all: build/openscad.js
 
 clean:
@@ -20,18 +23,18 @@ endif
 .PHONY: build
 build: build/openscad.js
 
-build/openscad.js: build/.image
+build/openscad.js: build/.image 
 	docker run --name tmpcpy openscad
 	docker cp tmpcpy:/build .
 	docker rm tmpcpy
 
-build/.image: build/.base-image
-	docker build libs/openscad -f Dockerfile -t openscad ${DOCKER_FLAGS}
+build/.image: build/.base-image Dockerfile
+	docker build libs/openscad -f Dockerfile -t $(DOCKER_TAG_OPENSCAD) ${DOCKER_FLAGS}
 	mkdir -p build
 	touch $@
 
-build/.base-image: libs
-	docker build libs -f Dockerfile.base -t openscad-base
+build/.base-image: libs Dockerfile.base
+	docker build libs -f Dockerfile.base -t $(DOCKER_TAG_BASE)
 	mkdir -p build
 	touch $@
 
