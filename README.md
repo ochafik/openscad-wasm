@@ -61,9 +61,14 @@ The project is an ES6 module. Simply import the module:
 
 ```ts
 import OpenSCAD from "./openscad.js";
+// OPTIONAL: add fonts to the FS
+import { addFonts } from "./openscad.fonts.js";
 
 // Instantiate the application
 const instance = await OpenSCAD({ noInitialRun: true });
+
+// OPTIONAL: add fonts to the FS
+addFonts(instance);
 
 // Write a file to the filesystem
 instance.FS.writeFile("/input.scad", `cube(10);`);
@@ -77,16 +82,6 @@ const output = instance.FS.readFile("/cube.stl");
 
 For more information on reading and writing files check out the [Emscripten File System API](https://emscripten.org/docs/api_reference/Filesystem-API.html).
 
-### SharedArrayBuffer Errors
-
-This project uses SharedArrayBuffer to manage threading. Currently most browsers will only enable SharedArrayBuffer when the following headers are sent along side the JavaScript/WASM:
-```
-Cross-Origin-Opener-Policy: same-origin
-Cross-Origin-Embedder-Policy: require-corp
-```
-
-For more information check out [MDN SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer#security_requirements).
-
 ## Project Status
 - [x] module builds
 - [x] module runs
@@ -95,7 +90,7 @@ For more information check out [MDN SharedArrayBuffer](https://developer.mozilla
 
 ## Future work
 - [x] Fix NULLGL in OpenSCAD 2021
-- [ ] Merge WASM patch into Boost.Filesystem
+- [-] Merge WASM patch into Boost.Filesystem. Patch was rejected https://github.com/boostorg/filesystem/pull/230
 
 ## Known Issues
 - [x] `text` does not render

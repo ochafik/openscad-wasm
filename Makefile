@@ -1,7 +1,7 @@
 DOCKER_TAG_BASE ?= openscad-base
 DOCKER_TAG_OPENSCAD ?= openscad
 
-all: build/openscad.js
+all: build
 
 clean:
 	rm -rf libs
@@ -21,21 +21,32 @@ DOCKER_FLAGS= --build-arg CMAKE_BUILD_TYPE=Debug --build-arg EMXX_FLAGS="-gsourc
 endif
 
 .PHONY: build
-build: build/openscad.js
+build: build/openscad.js build/openscad.fonts.js
 
-build/openscad.js: build/.image 
+build/openscad.fonts.js: runtime/node_modules runtime/**/* res
+	mkdir -p build
+	cd runtime; npm run build
+	cp runtime/dist/* build
+
+runtime/node_modules:
+	cd runtime; npm install
+
+build/openscad.js: .image.make
+	mkdir -p build
 	docker run --name tmpcpy openscad
-	docker cp tmpcpy:/build .
+	docker cp tmpcpy:/build/openscad.js build/
+	docker cp tmpcpy:/build/openscad.wasm build/
+	docker cp tmpcpy:/build/openscad.wasm.map build/ || true
 	docker rm tmpcpy
 
-build/.image: build/.base-image Dockerfile
+	sed -i '1s&^&/// <reference types="./openscad.d.ts" />\n&' build/openscad.js
+
+.image.make: .base-image.make Dockerfile
 	docker build libs/openscad -f Dockerfile -t $(DOCKER_TAG_OPENSCAD) ${DOCKER_FLAGS}
-	mkdir -p build
 	touch $@
 
-build/.base-image: libs Dockerfile.base
+.base-image.make: libs Dockerfile.base
 	docker build libs -f Dockerfile.base -t $(DOCKER_TAG_BASE)
-	mkdir -p build
 	touch $@
 
 libs: libs/cgal \
@@ -102,8 +113,7 @@ libs/doubleconversion:
 	git clone https://github.com/google/double-conversion ${SHALLOW} ${SINGLE_BRANCH} $@
 
 libs/openscad:
-	git clone --recurse https://github.com/ochafik/openscad.git --branch singleton-kernel --single-branch $@
-	# git clone --recurse https://github.com/openscad/openscad.git ${SINGLE_BRANCH} $@
+	git clone --recurse https://github.com/ochafik/openscad.git --branch filtered-number --single-branch $@
 
 libs/boost:
 	git clone --recurse https://github.com/boostorg/boost.git ${SHALLOW} ${SINGLE_BRANCH} $@
@@ -127,3 +137,8 @@ build/site-dist.zip: build/openscad.js
 	ls -l build/site-dist.zip
 
 site: build/site-dist.zip
+res: \
+	res/liberation
+
+res/liberation:
+	git clone --recurse https://github.com/shantigilbert/liberation-fonts-ttf.git ${SHALLOW} ${SINGLE_BRANCH} $@
