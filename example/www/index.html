@@ -2,20 +2,17 @@
 <html>
 
 <head>
-  <meta http-equiv="origin-trial" content="Arj2cp+o02Jaw371iSeQfKSXWN8QtxKGsu8VKhKLZP3O4yWuw1wYh4logzlyDXWokqdMAH4UAkZrnmBIDDEFkAoAAAB1eyJvcmlnaW4iOiJodHRwczovL29jaGFmaWsuY29tOjQ0MyIsImZlYXR1cmUiOiJVbnJlc3RyaWN0ZWRTaGFyZWRBcnJheUJ1ZmZlciIsImV4cGlyeSI6MTY1ODg3OTk5OSwiaXNTdWJkb21haW4iOnRydWV9">
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./coi-serviceworker.js');
-    }
-  </script>
-  <script src="three.min.js"></script>
-  <script src="Projector.js"></script>
-  <script src="stl_viewer.min.js"></script>
-  <script src="webgl_detector.js"></script>
-  <script src="OrbitControls.js"></script>
-  <script src="parser.min.js"></script>
-  <script src="TrackballControls.js"></script>
-  <script src="CanvasRenderer.js"></script>
+  <!-- <meta http-equiv="origin-trial" content="Arj2cp+o02Jaw371iSeQfKSXWN8QtxKGsu8VKhKLZP3O4yWuw1wYh4logzlyDXWokqdMAH4UAkZrnmBIDDEFkAoAAAB1eyJvcmlnaW4iOiJodHRwczovL29jaGFmaWsuY29tOjQ0MyIsImZlYXR1cmUiOiJVbnJlc3RyaWN0ZWRTaGFyZWRBcnJheUJ1ZmZlciIsImV4cGlyeSI6MTY1ODg3OTk5OSwiaXNTdWJkb21haW4iOnRydWV9"> -->
+  <script src="three.min.js" defer></script>
+  <script src="Projector.js" defer></script>
+  <script src="stl_viewer.min.js" defer></script>
+  <script src="webgl_detector.js" defer></script>
+  <script src="OrbitControls.js" defer></script>
+  <script src="parser.min.js" defer></script>
+  <script src="TrackballControls.js" defer></script>
+  <script src="CanvasRenderer.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/BrowserFS/2.0.0/browserfs.min.js" defer></script>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" />
 
@@ -24,9 +21,9 @@
   <script>
     var require = { paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs' } }
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.nls.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.nls.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.js" defer></script>
   <!-- <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
     (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -36,8 +33,8 @@
     ga('create', '{{ site.google_analytics }}', 'auto');
     ga('send', 'pageview');
   </script> -->
-  <script type="text/javascript" id="cookiebanner"
-    src="https://cdnjs.cloudflare.com/ajax/libs/cookie-banner/1.2.2/cookiebanner.min.js"></script>
+  <!-- <script type="text/javascript" id="cookiebanner"
+    src="https://cdnjs.cloudflare.com/ajax/libs/cookie-banner/1.2.2/cookiebanner.min.js" defer></script> -->
   <script type="module" src="main.js"></script>
   <style>
     body {
@@ -180,7 +177,7 @@
 
         <span class="text-fragment"><input type="checkbox" id="autorender" checked>Auto-render</span>
         <span class="text-fragment"><input type="checkbox" id="autoparse" checked>Parse continuously</span>
-        <span class="text-fragment"><input type="number" min="16" max="2048" step="16" id="maximum-megabytes" value="512">MB</span>
+        <!-- <span class="text-fragment"><input type="number" min="16" max="2048" step="16" id="maximum-megabytes" value="512">MB</span> -->
         
         <span class="text-fragment"><input type="checkbox" id="show-experimental">Show experimental features<sup>BETA</sup></span>
         

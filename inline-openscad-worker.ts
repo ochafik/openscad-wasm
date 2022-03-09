@@ -1,5 +1,5 @@
-// const importMetaUrl = 'https://ochafik.com/openscad/openscad-worker-firefox.js';
-const importMetaUrl = 'http://localhost:8080';
+const importMetaUrl = 'https://ochafik.com/openscad/openscad-worker-firefox.js';
+// const importMetaUrl = 'http://localhost:8080';
 
 const workerJs = await Deno.readTextFile("example/www/openscad-worker.js");
 const emscriptenJs = await Deno.readTextFile("build/openscad.js");
@@ -12,4 +12,4 @@ ${emscriptenJs.replaceAll(/import.meta.url/g, 'import_meta_url').replaceAll(/exp
 ${workerJs.replaceAll(/import OpenSCAD from .*;/g, '')}
 `;
 
-await Deno.writeTextFile('build/openscad-worker-firefox.js', out);
+await Deno.writeTextFile('build/openscad-worker-inlined.js', out);

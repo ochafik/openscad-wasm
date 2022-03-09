@@ -15,8 +15,8 @@ const showExperimentalFeaturesCheckbox = document.getElementById('show-experimen
 const stlViewerElement = document.getElementById("viewer");
 const logsElement = document.getElementById("logs");
 const featuresContainer = document.getElementById("features");
-const maximumMegabytesInput = document.getElementById("maximum-megabytes");
-const copyLinkButton = document.getElementById("copy-link");
+// const maximumMegabytesInput = document.getElementById("maximum-megabytes");
+// const copyLinkButton = document.getElementById("copy-link");
 
 const featureCheckboxes = {};
 
@@ -24,23 +24,23 @@ var persistCameraState = false; // If one gets too far, it's really hard to auto
 var stlViewer;
 var stlFile;
 
-if (copyLinkButton) {
-  copyLinkButton.onclick = async () => {
-    const result = await navigator.permissions.query({name: "clipboard-write"});
-    if (result.state == "granted" || result.state == "prompt") {
-      try {
-        // const serviceUrl = `https://is.gd/create.php?format=simple&url=${encodeURIComponent(location.href)}`;
-        // const serviceUrl = 'https://is.gd/create.php?format=simple&url=https://www.example.com';
-        const fetchUrl = '/shorten?url=' + encodeURIComponent(location.href);
-        const url = await (await fetch(fetchUrl)).text();
-        console.log('url', url)
-        navigator.clipboard.writeText(url);
-      } catch (e) {
-        console.error("Failed to create the url", e);
-      }
-    }
-  };
-}
+// if (copyLinkButton) {
+//   copyLinkButton.onclick = async () => {
+//     const result = await navigator.permissions.query({name: "clipboard-write"});
+//     if (result.state == "granted" || result.state == "prompt") {
+//       try {
+//         // const serviceUrl = `https://is.gd/create.php?format=simple&url=${encodeURIComponent(location.href)}`;
+//         // const serviceUrl = 'https://is.gd/create.php?format=simple&url=https://www.example.com';
+//         const fetchUrl = '/shorten?url=' + encodeURIComponent(location.href);
+//         const url = await (await fetch(fetchUrl)).text();
+//         console.log('url', url)
+//         navigator.clipboard.writeText(url);
+//       } catch (e) {
+//         console.error("Failed to create the url", e);
+//       }
+//     }
+//   };
+// }
 
 function buildStlViewer() {
   const stlViewer = new StlViewer(stlViewerElement);
@@ -161,8 +161,8 @@ const checkSyntax = turnIntoDelayableExecution(syntaxDelay, () => {
   const timestamp = Date.now();
 
   const job = spawnOpenSCAD({
-    inputs: [['/input.scad', source + '\n']],
-    args: ["/input.scad", "-o", "out.ast"],
+    inputs: [['/mnt/input.scad', source + '\n']],
+    args: ["/mnt/input.scad", "-o", "out.ast"],
   });
 
   return {
@@ -222,14 +222,14 @@ const render = turnIntoDelayableExecution(renderDelay, () => {
   setExecuting(true);
   
   const job = spawnOpenSCAD({
-    wasmMemory,
-    inputs: [['/input.scad', source]],
+    // wasmMemory,
+    inputs: [['/mnt/input.scad', source]],
     args: [
-      "/input.scad",
+      "/mnt/input.scad",
       "-o", "out.stl",
       ...Object.keys(featureCheckboxes).filter(f => featureCheckboxes[f].checked).map(f => `--enable=${f}`),
     ],
-    outputPaths: ['/out.stl']
+    outputPaths: ['/mnt/out.stl']
   });
 
   return {
@@ -282,7 +282,7 @@ function getState() {
     },
     autorender: autorenderCheckbox.checked,
     autoparse: autoparseCheckbox.checked,
-    maximumMegabytes: Number(maximumMegabytesInput.value),
+    // maximumMegabytes: Number(maximumMegabytesInput.value),
     features,
     showExp: features.length > 0 || showExperimentalFeaturesCheckbox.checked,
     camera: persistCameraState ? stlViewer.get_camera_state() : null,
@@ -313,17 +313,17 @@ const defaultState = {
   },
   maximumMegabytes: 1024,
   // maximumMegabytes: 512,
-  features: ['fast-csg', 'fast-csg-trust-corefinement', 'lazy-union'],
+  features: ['fast-csg', 'fast-csg-trust-corefinement', 'fast-csg-remesh', 'fast-csg-exact-callbacks', 'lazy-union'],
 };
 
-var wasmMemory;
-var lastMaximumMegabytes;
-function setMaximumMegabytes(maximumMegabytes) {
-  if (!wasmMemory || (lastMaximumMegabytes != maximumMegabytes)) {
-    wasmMemory = createWasmMemory({maximumMegabytes});
-    lastMaximumMegabytes = maximumMegabytes;
-  }
-}
+// var wasmMemory;
+// var lastMaximumMegabytes;
+// function setMaximumMegabytes(maximumMegabytes) {
+//   if (!wasmMemory || (lastMaximumMegabytes != maximumMegabytes)) {
+//     wasmMemory = createWasmMemory({maximumMegabytes});
+//     lastMaximumMegabytes = maximumMegabytes;
+//   }
+// }
 
 function updateExperimentalCheckbox(temptativeChecked) {
   const features = Object.keys(featureCheckboxes).filter(f => featureCheckboxes[f].checked);
@@ -347,9 +347,9 @@ function setState(state) {
   autoparseCheckbox.checked = state.autoparse ?? true;
   updateExperimentalCheckbox(state.showExp ?? false);
 
-  const maximumMegabytes = state.maximumMegabytes ?? defaultState.maximumMegabytes;
-  setMaximumMegabytes(maximumMegabytes);
-  maximumMegabytesInput.value = maximumMegabytes;
+  // const maximumMegabytes = state.maximumMegabytes ?? defaultState.maximumMegabytes;
+  // setMaximumMegabytes(maximumMegabytes);
+  // maximumMegabytesInput.value = maximumMegabytes;
 }
 
 var previousNormalizedState;
@@ -433,10 +433,10 @@ try {
 
   autorenderCheckbox.onchange = () => onStateChanged({allowRun: autorenderCheckbox.checked});
   autoparseCheckbox.onchange = () => onStateChanged({allowRun: autoparseCheckbox.checked});
-  maximumMegabytesInput.oninput = () => {
-    setMaximumMegabytes(Number(maximumMegabytesInput.value));
-    onStateChanged({allowRun: true});
-  };
+  // maximumMegabytesInput.oninput = () => {
+  //   setMaximumMegabytes(Number(maximumMegabytesInput.value));
+  //   onStateChanged({allowRun: true});
+  // };
   
   editor.focus();
 

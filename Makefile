@@ -11,8 +11,7 @@ test:
 	cd tests; deno test --allow-read --allow-write --jobs 4
 
 .PHONY: example
-example:
-	deno run --allow-net --allow-read --allow-write generate-openscad-worker-firefox.ts
+example: build/openscad-worker-inlined.js
 	cd example; deno run --allow-net --allow-read server.ts
 
 ENV=Release
@@ -129,9 +128,12 @@ libs/mpfr-4.1.0:
 	tar xf mpfr-4.1.0.tar.xz -C libs
 	rm mpfr-4.1.0.tar.xz
 
-build/site-dist.zip: build/openscad.js
+build/openscad-worker-inlined.js:
+	deno run --allow-net --allow-read --allow-write inline-openscad-worker.ts
+
+build/site-dist.zip: build/openscad.js build/openscad-worker-inlined.js
 	mkdir -p dist/openscad
-	cp build/openscad.* dist/openscad
+	cp build/openscad* dist/openscad
 	cp example/www/* dist/openscad
 	( cd dist && zip -r ../build/site-dist.zip openscad )
 	ls -l build/site-dist.zip
