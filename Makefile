@@ -11,8 +11,26 @@ test:
 	cd tests; deno test --allow-read --allow-write --jobs 4
 
 .PHONY: example
-example: build/openscad-worker-inlined.js
+example: \
+		build/openscad-worker-inlined.js \
+		build/fonts.zip \
+		build/NopSCADlib.zip \
+		build/BOSL.zip \
+		build/BOSL2.zip \
+		build/funcutils.zip \
+		build/FunctionalOpenSCAD.zip \
+		build/YAPP_Box.zip \
+		build/smooth-prim.zip \
+		build/plot-function.zip \
+		build/closepoints.zip \
+		build/openscad-tray.zip \
+		build/Stemfie_OpenSCAD.zip
 	cd example; deno run --allow-net --allow-read server.ts
+
+build/fonts.zip: res/liberation
+	mkdir -p build
+	cp res/fonts/fonts.conf res/liberation
+	( cd res/liberation && zip -r ../../build/fonts.zip fonts.conf *.ttf LICENSE AUTHORS )
 
 ENV=Release
 ifeq ($(strip $(ENV)),Debug)
@@ -22,7 +40,7 @@ endif
 .PHONY: build
 build: build/openscad.js build/openscad.fonts.js
 
-build/openscad.fonts.js: runtime/node_modules runtime/**/* res
+build/openscad.fonts.js: runtime/node_modules runtime/**/* res res/liberation
 	mkdir -p build
 	cd runtime; npm run build
 	cp runtime/dist/* build
@@ -128,7 +146,92 @@ libs/mpfr-4.1.0:
 	tar xf mpfr-4.1.0.tar.xz -C libs
 	rm mpfr-4.1.0.tar.xz
 
-build/openscad-worker-inlined.js:
+
+libs/BOSL2: 
+	git clone --recurse https://github.com/revarbat/BOSL2.git ${SHALLOW} ${SINGLE_BRANCH} $@
+
+build/BOSL2.zip: libs/BOSL2
+	mkdir -p build
+	( cd libs/BOSL2 ; zip -r ../../build/BOSL2.zip *.scad LICENSE )
+
+libs/BOSL: 
+	git clone --recurse https://github.com/revarbat/BOSL.git ${SHALLOW} ${SINGLE_BRANCH} $@
+
+build/BOSL.zip: libs/BOSL
+	mkdir -p build
+	( cd libs/BOSL ; zip -r ../../build/BOSL.zip *.scad LICENSE )
+
+libs/NopSCADlib: 
+	git clone --recurse https://github.com/nophead/NopSCADlib.git ${SHALLOW} ${SINGLE_BRANCH} $@
+
+build/NopSCADlib.zip: libs/NopSCADlib
+	mkdir -p build
+	( cd libs/NopSCADlib ; zip -r ../../build/NopSCADlib.zip `find . -name '*.scad' | grep -v tests | grep -v examples` COPYING )
+
+libs/funcutils: 
+	git clone --recurse https://github.com/thehans/funcutils.git ${SHALLOW} ${SINGLE_BRANCH} $@
+
+build/funcutils.zip: libs/funcutils
+	mkdir -p build
+	( cd libs/funcutils ; zip -r ../../build/funcutils.zip *.scad LICENSE )
+
+libs/FunctionalOpenSCAD: 
+	git clone --recurse https://github.com/thehans/FunctionalOpenSCAD.git ${SHALLOW} ${SINGLE_BRANCH} $@
+
+build/FunctionalOpenSCAD.zip: libs/FunctionalOpenSCAD
+	mkdir -p build
+	( cd libs/FunctionalOpenSCAD ; zip -r ../../build/FunctionalOpenSCAD.zip *.scad LICENSE )
+
+libs/YAPP_Box: 
+	git clone --recurse https://github.com/mrWheel/YAPP_Box.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
+
+build/YAPP_Box.zip: libs/YAPP_Box
+	mkdir -p build
+	( cd libs/YAPP_Box ; zip -r ../../build/YAPP_Box.zip *.scad LICENSE )
+
+libs/Stemfie_OpenSCAD: 
+	git clone --recurse https://github.com/Cantareus/Stemfie_OpenSCAD.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
+
+build/Stemfie_OpenSCAD.zip: libs/Stemfie_OpenSCAD
+	mkdir -p build
+	( cd libs/Stemfie_OpenSCAD ; zip -r ../../build/Stemfie_OpenSCAD.zip *.scad LICENSE )
+
+# libs/threads: 
+# 	git clone --recurse https://github.com/rcolyer/threads.git ${SHALLOW} ${SINGLE_BRANCH} $@
+
+# build/threads.zip: libs/threads
+# 	mkdir -p build
+# 	( cd libs/threads ; zip -r ../../build/threads.zip *.scad LICENSE.txt )
+
+libs/smooth-prim: 
+	git clone --recurse https://github.com/rcolyer/smooth-prim.git ${SHALLOW} ${SINGLE_BRANCH} $@
+
+build/smooth-prim.zip: libs/smooth-prim
+	mkdir -p build
+	( cd libs/smooth-prim ; zip -r ../../build/smooth-prim.zip *.scad LICENSE.txt )
+
+libs/plot-function: 
+	git clone --recurse https://github.com/rcolyer/plot-function.git ${SHALLOW} ${SINGLE_BRANCH} $@
+
+build/plot-function.zip: libs/plot-function
+	mkdir -p build
+	( cd libs/plot-function ; zip -r ../../build/plot-function.zip *.scad LICENSE.txt )
+
+libs/closepoints: 
+	git clone --recurse https://github.com/rcolyer/closepoints.git ${SHALLOW} ${SINGLE_BRANCH} $@
+
+build/closepoints.zip: libs/closepoints
+	mkdir -p build
+	( cd libs/closepoints ; zip -r ../../build/closepoints.zip *.scad LICENSE.txt )
+
+libs/openscad-tray: 
+	git clone --recurse https://github.com/sofian/openscad-tray.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
+
+build/openscad-tray.zip: libs/openscad-tray
+	mkdir -p build
+	( cd libs/openscad-tray ; zip -r ../../build/openscad-tray.zip *.scad LICENSE.txt )
+
+build/openscad-worker-inlined.js: example/www/openscad-worker.js inline-openscad-worker.ts
 	deno run --allow-net --allow-read --allow-write inline-openscad-worker.ts
 
 build/site-dist.zip: build/openscad.js build/openscad-worker-inlined.js
