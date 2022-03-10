@@ -2,6 +2,8 @@
 <html>
 
 <head>
+  <meta name="viewport" content="width=device-width, user-scalable=no" />
+
   <!-- <meta http-equiv="origin-trial" content="Arj2cp+o02Jaw371iSeQfKSXWN8QtxKGsu8VKhKLZP3O4yWuw1wYh4logzlyDXWokqdMAH4UAkZrnmBIDDEFkAoAAAB1eyJvcmlnaW4iOiJodHRwczovL29jaGFmaWsuY29tOjQ0MyIsImZlYXR1cmUiOiJVbnJlc3RyaWN0ZWRTaGFyZWRBcnJheUJ1ZmZlciIsImV4cGlyeSI6MTY1ODg3OTk5OSwiaXNTdWJkb21haW4iOnRydWV9"> -->
   <script src="three.min.js" defer></script>
   <script src="Projector.js" defer></script>
@@ -39,23 +41,22 @@
   <style>
     body {
       margin: 0;
-      overflow: hidden;
+      /* overflow: hidden; */
+      min-height: 100vh;
+      /* mobile viewport bug fix */
+      min-height: -webkit-fill-available;
+    }
+
+    html {
+      height: -webkit-fill-available;
     }
 
     .root {
       position: fixed;
       left: 0;
       top: 100;
-      width: 100%;
-      height: 100%;
-    }
-
-    #viewer {
-      min-height: 80vh;
-    }
-
-    #monacoEditor {
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
     }
 
     #editor-panel,
@@ -63,6 +64,30 @@
       min-width: 40vw;
       padding: 10px;
       /* height: 100vh; */
+    }
+
+    #cheatsheet-link {
+      display: none;
+      position: fixed;
+      right: 120px;
+      top: 5px;
+      z-index: 10;
+      margin: 10px 20px; 
+    }
+
+    #flip-mode {
+      display: none;
+      position: fixed;
+      left: 5px;
+      top: 5px;
+      z-index: 10;
+      font-size: large;
+      padding: 10px 20px;
+      margin: 5px 0;
+    }
+
+    .iPadShowKeyboard {
+      right: 130px !important;
     }
 
     #view-panel {
@@ -83,11 +108,6 @@
       flex-direction: column;
     }
 
-    #monacoEditor,
-    #rawEditor {
-      flex-grow: 1;
-      width: 100%;
-    }
     #run, #kill {
       padding: 5px;
       margin-top: 5px;
@@ -119,16 +139,108 @@
     .spacer {
       flex-grow: 1;
     }
+
+    .title {
+      text-align: center;
+      width: 100%;
+    }
+    
+    #viewer {
+      min-height: 80vh;
+    }
+
+    #monacoEditor {
+      flex-grow: 1;
+    }
+
+    @media only screen and (max-height: 600px),
+           only screen and (max-width: 600px),
+           only screen and (max-width: 767px),
+           only screen and (max-aspect-ratio: 1/2) {
+      .settings,
+      .desktop {
+        display: none;
+      }
+    }
+/* 
+    @media only screen and ((max-width: 767px) or (max-height: 400px)) {
+      */
+    @media only screen and (max-width: 767px),
+           only screen and (max-aspect-ratio: 1/2) {
+      
+      #cheatsheet-link {
+        display: block;
+      }
+      #flip-mode {
+        display: block;
+      }
+      /* .title {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+      } */
+      /* .title h1 {
+        font-size: large;
+      } */
+
+      #monacoEditor,
+      #viewer {
+        padding: 10px 0;
+        position: absolute;
+        left: 0;
+        top: 50px;
+        right: 0;
+        bottom: 0;
+        height: calc(100vh - 55px);
+        width: 100vw;
+      }
+
+      .minimap.slider-mouseover {
+        height: 80vh !important;
+        bottom: 0;
+      }
+
+      .monaco-editor {
+        background-color: rgba(255,255,255,0.7) !important;
+      }
+      .overflow-guard,
+      .monaco-scrollable-element,
+      .monaco-editor-background {
+        background-color: transparent !important;
+      }
+
+      #monacoEditor {
+        z-index: 1;
+      }
+      #viewer {
+        z-index: 0;
+      }
+
+      #viewer.focused {
+        z-index: 2;
+      }
+
+      /* .settings, */
+      .features,
+      .logs-container
+      /* , .github-fork-ribbon */
+       {
+        display: none;
+      }
+    }
+  
   </style>
   <style>.github-fork-ribbon:before { background-color: #333; }</style>
 
 </head>
 
 <body>
-  <a class="github-fork-ribbon" href="https://github.com/ochafik/openscad-wasm/tree/editor-ochafik.com" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+  <a target="_blank" class="github-fork-ribbon" href="https://github.com/ochafik/openscad-wasm/tree/editor-ochafik.com" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
 
   <div class="root row">
     <div id="editor-panel" class="col">
+      <a href="http://openscad.org/cheatsheet/" target="_blank" id="cheatsheet-link">Cheatsheet</a>
+      <button id="flip-mode">Flip 🔀</button>
       <div id="monacoEditor"></div>
       <div class="logs-container">
         <pre><code id="logs"></code></pre>
@@ -146,27 +258,24 @@
       
     </div>
     <div id="view-panel" class="col">
-      <div class="text">
-        <h1>OpenSCAD Web Demo<sup style="color: red">ALPHA</sup></h1>
+      <div class="text title desktop">
+        <h2>OpenSCAD Playground<sup style="color: red">ALPHA</sup></h2>
       </div>
-      <div class="text">An ALPHA-quality demo that simply plugs
-        <a href="https://github.com/DSchroer/openscad-wasm">DSchroer's OpenSCAD WASM port</a>
-        with a <a href="https://github.com/microsoft/monaco-editor">Monaco Editor</a> (w/ custom OpenSCAD auto-completion)
-        and an <a href="https://github.com/omrips/viewstl">STL Viewer</a>
-      </div>
-      <div>
-        <b style="color: red">WARNING: </b>
-        Rendering is still extremely slow (<a href="https://github.com/DSchroer/openscad-wasm/issues/2" target="_blank">see this issue</a>),
-        some models might crash and the STL viewer is known to be glitchy.
-      </div>
-      <span class="text">
-        <a class="text-fragment" style="padding-left: 0" href="http://openscad.org/">OpenSCAD Home</a> |
-        <a class="text-fragment" href="http://openscad.org/cheatsheet/">Cheatsheet</a> |
+      <div class="text desktop">
+        <a target="_blank" class="text-fragment" style="padding-left: 0" href="http://openscad.org/documentation.html">Docs</a> |
+        <a target="_blank" class="text-fragment" href="http://openscad.org/cheatsheet/">Cheatsheet</a> |
         <span class="text-fragment">
-          Licensed under the <a href="https://raw.githubusercontent.com/ochafik/openscad-wasm/master/COPYING">GPLv2</a>.
+          <a target="_blank" href="https://github.com/DSchroer/openscad-wasm">WASM build</a>
+          + <a target="_blank" href="https://github.com/microsoft/monaco-editor">Monaco</a>
+          + <a target="_blank" href="https://github.com/omrips/viewstl">STL Viewer</a>
+        </span> |
+        <span class="text-fragment">
+          Under <a href="https://raw.githubusercontent.com/ochafik/openscad-wasm/master/COPYING">GPLv2</a>
         </span> 
-        
-      <div class="row text">
+      </div>
+      <div class="text desktop">
+      </div>
+      <div class="row text settings">
         <button class="button" id="run">Render (Ctrl+Enter)</button>
         <button class="button" id="kill" disabled>🚫</button>
         
@@ -175,15 +284,16 @@
 
         <span class="spacer"></span>
 
-        <span class="text-fragment"><input type="checkbox" id="autorender" checked>Auto-render</span>
-        <span class="text-fragment"><input type="checkbox" id="autoparse" checked>Parse continuously</span>
+        <span class="text-fragment"><input type="checkbox" id="autorender" checked>Autorender</span>
+        <span class="text-fragment"><input type="checkbox" id="autoparse" checked>Autocheck</span>
         <!-- <span class="text-fragment"><input type="number" min="16" max="2048" step="16" id="maximum-megabytes" value="512">MB</span> -->
         
-        <span class="text-fragment"><input type="checkbox" id="show-experimental">Show experimental features<sup>BETA</sup></span>
+        <span class="text-fragment"><input type="checkbox" id="show-experimental">Show experiments</span>
         
+        <span class="spacer"></span>
       </div>
       <div id="viewer" tabindex="0"></div>
-      <span id="features"></span>
+      <span id="features" class="features"></span>
     </div>
   </div>
 

@@ -15,8 +15,10 @@ const showExperimentalFeaturesCheckbox = document.getElementById('show-experimen
 const stlViewerElement = document.getElementById("viewer");
 const logsElement = document.getElementById("logs");
 const featuresContainer = document.getElementById("features");
+const flipModeButton = document.getElementById("flip-mode");
 // const maximumMegabytesInput = document.getElementById("maximum-megabytes");
 // const copyLinkButton = document.getElementById("copy-link");
+
 
 const featureCheckboxes = {};
 
@@ -49,6 +51,7 @@ function buildStlViewer() {
     stlViewer.set_color(id, '#f9d72c');
     stlViewer.set_auto_zoom(true);
     stlViewer.set_auto_resize(true);
+    // stlViewer.set_auto_rotate(true);
     // stlViewer.set_edges(id, true);
     // onStateChanged({allowRun: false});
   };    
@@ -85,6 +88,21 @@ killButton.onclick = () => {
     lastJob = null;
   }
 };
+
+function setViewerFocused(value) {
+  if (value) {
+    flipModeButton.innerText = 'Edit ✍️';
+    stlViewerElement.classList.add('focused');
+    stlViewer.set_auto_rotate(false);
+  } else {
+    flipModeButton.innerText = 'Interact 🤏';
+    stlViewerElement.classList.remove('focused');
+    stlViewer.set_auto_rotate(true);
+  }
+}
+function isViewerFocused() {
+  return stlViewerElement.classList.contains('focused');
+}
 
 function setExecuting(v) {
   killButton.disabled = !v;
@@ -248,7 +266,9 @@ const render = turnIntoDelayableExecution(renderDelay, () => {
         
         const [output] = result.outputs;
         if (!output) throw 'No output from runner!'
-        const [fileName, content] = output;
+        const [filePath, content] = output;
+        const filePathFragments = filePath.split('/');
+        const fileName = filePathFragments[filePathFragments.length - 1];
 
         // TODO: have the runner accept and return files.
         const blob = new Blob([content], { type: "application/octet-stream" });
@@ -284,7 +304,9 @@ function getState() {
     autoparse: autoparseCheckbox.checked,
     // maximumMegabytes: Number(maximumMegabytesInput.value),
     features,
-    showExp: features.length > 0 || showExperimentalFeaturesCheckbox.checked,
+    viewerFocused: isViewerFocused(),
+    // showExp: features.length > 0 || showExperimentalFeaturesCheckbox.checked,
+    showExp: showExperimentalFeaturesCheckbox.checked,
     camera: persistCameraState ? stlViewer.get_camera_state() : null,
   };
 }
@@ -312,6 +334,7 @@ const defaultState = {
     content: 'cube(1);\ntranslate([0.5, 0.5, 0.5])\n\tcube(1);',
   },
   maximumMegabytes: 1024,
+  viewerFocused: false,
   // maximumMegabytes: 512,
   features: ['fast-csg', 'fast-csg-trust-corefinement', 'fast-csg-remesh', 'fast-csg-exact-callbacks', 'lazy-union'],
 };
@@ -328,8 +351,8 @@ const defaultState = {
 function updateExperimentalCheckbox(temptativeChecked) {
   const features = Object.keys(featureCheckboxes).filter(f => featureCheckboxes[f].checked);
   const hasFeatures = features.length > 0;
-  showExperimentalFeaturesCheckbox.checked = hasFeatures || (temptativeChecked ?? showExperimentalFeaturesCheckbox.checked);
-  showExperimentalFeaturesCheckbox.disabled = hasFeatures;
+  // showExperimentalFeaturesCheckbox.checked = hasFeatures || (temptativeChecked ?? showExperimentalFeaturesCheckbox.checked);
+  // showExperimentalFeaturesCheckbox.disabled = hasFeatures;
 }
 
 function setState(state) {
@@ -345,6 +368,7 @@ function setState(state) {
   }
   autorenderCheckbox.checked = state.autorender ?? true;
   autoparseCheckbox.checked = state.autoparse ?? true;
+  setViewerFocused(state.viewerFocused ?? false);
   updateExperimentalCheckbox(state.showExp ?? false);
 
   // const maximumMegabytes = state.maximumMegabytes ?? defaultState.maximumMegabytes;
@@ -433,6 +457,12 @@ try {
 
   autorenderCheckbox.onchange = () => onStateChanged({allowRun: autorenderCheckbox.checked});
   autoparseCheckbox.onchange = () => onStateChanged({allowRun: autoparseCheckbox.checked});
+
+
+  flipModeButton.onclick = () => {
+    setViewerFocused(!isViewerFocused());
+    onStateChanged({allowRun: false});
+  };
   // maximumMegabytesInput.oninput = () => {
   //   setMaximumMegabytes(Number(maximumMegabytesInput.value));
   //   onStateChanged({allowRun: true});
