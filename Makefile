@@ -13,24 +13,24 @@ test:
 .PHONY: example
 example: \
 		build/openscad-worker-inlined.js \
-		build/fonts.zip \
-		build/NopSCADlib.zip \
-		build/BOSL.zip \
-		build/BOSL2.zip \
-		build/funcutils.zip \
-		build/FunctionalOpenSCAD.zip \
-		build/YAPP_Box.zip \
-		build/smooth-prim.zip \
-		build/plot-function.zip \
-		build/closepoints.zip \
-		build/openscad-tray.zip \
-		build/Stemfie_OpenSCAD.zip
+		build/libraries/fonts.zip \
+		build/libraries/NopSCADlib.zip \
+		build/libraries/BOSL.zip \
+		build/libraries/BOSL2.zip \
+		build/libraries/funcutils.zip \
+		build/libraries/FunctionalOpenSCAD.zip \
+		build/libraries/YAPP_Box.zip \
+		build/libraries/smooth-prim.zip \
+		build/libraries/plot-function.zip \
+		build/libraries/closepoints.zip \
+		build/libraries/Stemfie_OpenSCAD.zip \
+		build/libraries/UB.scad.zip
 	cd example; deno run --allow-net --allow-read server.ts
 
-build/fonts.zip: res/liberation
-	mkdir -p build
+build/libraries/fonts.zip: res/liberation
+	mkdir -p build/libraries
 	cp res/fonts/fonts.conf res/liberation
-	( cd res/liberation && zip -r ../../build/fonts.zip fonts.conf *.ttf LICENSE AUTHORS )
+	( cd res/liberation && zip -r ../../build/libraries/fonts.zip fonts.conf *.ttf LICENSE AUTHORS )
 
 ENV=Release
 ifeq ($(strip $(ENV)),Debug)
@@ -89,7 +89,8 @@ SINGLE_BRANCH=--branch master --single-branch
 SHALLOW=--depth 1
 
 libs/cgal:
-	git clone https://github.com/CGAL/cgal.git ${SHALLOW} ${SINGLE_BRANCH} $@
+	git clone --recurse https://github.com/ochafik/cgal.git --branch interval-free-epeck --single-branch $@
+	# git clone https://github.com/CGAL/cgal.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
 libs/eigen:
 	git clone https://github.com/PX4/eigen.git ${SHALLOW} ${SINGLE_BRANCH} $@
@@ -130,7 +131,8 @@ libs/doubleconversion:
 	git clone https://github.com/google/double-conversion ${SHALLOW} ${SINGLE_BRANCH} $@
 
 libs/openscad:
-	git clone --recurse https://github.com/ochafik/openscad.git --branch filtered-number --single-branch $@
+	git clone --recurse https://github.com/ochafik/openscad.git --branch unfiltered-lazy --single-branch $@
+	 #git clone --recurse https://github.com/ochafik/openscad.git --branch filtered-number --single-branch $@
 
 libs/boost:
 	git clone --recurse https://github.com/boostorg/boost.git ${SHALLOW} ${SINGLE_BRANCH} $@
@@ -150,86 +152,93 @@ libs/mpfr-4.1.0:
 libs/BOSL2: 
 	git clone --recurse https://github.com/revarbat/BOSL2.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
-build/BOSL2.zip: libs/BOSL2
-	mkdir -p build
-	( cd libs/BOSL2 ; zip -r ../../build/BOSL2.zip *.scad LICENSE )
+build/libraries/BOSL2.zip: libs/BOSL2
+	mkdir -p build/libraries
+	( cd libs/BOSL2 ; zip -r ../../build/libraries/BOSL2.zip *.scad LICENSE )
 
 libs/BOSL: 
 	git clone --recurse https://github.com/revarbat/BOSL.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
-build/BOSL.zip: libs/BOSL
-	mkdir -p build
-	( cd libs/BOSL ; zip -r ../../build/BOSL.zip *.scad LICENSE )
+build/libraries/BOSL.zip: libs/BOSL
+	mkdir -p build/libraries
+	( cd libs/BOSL ; zip -r ../../build/libraries/BOSL.zip *.scad LICENSE )
 
 libs/NopSCADlib: 
 	git clone --recurse https://github.com/nophead/NopSCADlib.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
-build/NopSCADlib.zip: libs/NopSCADlib
-	mkdir -p build
-	( cd libs/NopSCADlib ; zip -r ../../build/NopSCADlib.zip `find . -name '*.scad' | grep -v tests | grep -v examples` COPYING )
+build/libraries/NopSCADlib.zip: libs/NopSCADlib
+	mkdir -p build/libraries
+	( cd libs/NopSCADlib ; zip -r ../../build/libraries/NopSCADlib.zip `find . -name '*.scad' | grep -v tests | grep -v examples` COPYING )
 
 libs/funcutils: 
 	git clone --recurse https://github.com/thehans/funcutils.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
-build/funcutils.zip: libs/funcutils
-	mkdir -p build
-	( cd libs/funcutils ; zip -r ../../build/funcutils.zip *.scad LICENSE )
+build/libraries/funcutils.zip: libs/funcutils
+	mkdir -p build/libraries
+	( cd libs/funcutils ; zip -r ../../build/libraries/funcutils.zip *.scad LICENSE )
 
 libs/FunctionalOpenSCAD: 
 	git clone --recurse https://github.com/thehans/FunctionalOpenSCAD.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
-build/FunctionalOpenSCAD.zip: libs/FunctionalOpenSCAD
-	mkdir -p build
-	( cd libs/FunctionalOpenSCAD ; zip -r ../../build/FunctionalOpenSCAD.zip *.scad LICENSE )
+build/libraries/FunctionalOpenSCAD.zip: libs/FunctionalOpenSCAD
+	mkdir -p build/libraries
+	( cd libs/FunctionalOpenSCAD ; zip -r ../../build/libraries/FunctionalOpenSCAD.zip *.scad LICENSE )
 
 libs/YAPP_Box: 
 	git clone --recurse https://github.com/mrWheel/YAPP_Box.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
 
-build/YAPP_Box.zip: libs/YAPP_Box
-	mkdir -p build
-	( cd libs/YAPP_Box ; zip -r ../../build/YAPP_Box.zip *.scad LICENSE )
+build/libraries/YAPP_Box.zip: libs/YAPP_Box
+	mkdir -p build/libraries
+	( cd libs/YAPP_Box ; zip -r ../../build/libraries/YAPP_Box.zip *.scad LICENSE )
 
 libs/Stemfie_OpenSCAD: 
 	git clone --recurse https://github.com/Cantareus/Stemfie_OpenSCAD.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
 
-build/Stemfie_OpenSCAD.zip: libs/Stemfie_OpenSCAD
-	mkdir -p build
-	( cd libs/Stemfie_OpenSCAD ; zip -r ../../build/Stemfie_OpenSCAD.zip *.scad LICENSE )
+build/libraries/Stemfie_OpenSCAD.zip: libs/Stemfie_OpenSCAD
+	mkdir -p build/libraries
+	( cd libs/Stemfie_OpenSCAD ; zip -r ../../build/libraries/Stemfie_OpenSCAD.zip *.scad LICENSE )
 
 # libs/threads: 
 # 	git clone --recurse https://github.com/rcolyer/threads.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
-# build/threads.zip: libs/threads
-# 	mkdir -p build
-# 	( cd libs/threads ; zip -r ../../build/threads.zip *.scad LICENSE.txt )
+# build/libraries/threads.zip: libs/threads
+# 	mkdir -p build/libraries
+# 	( cd libs/threads ; zip -r ../../build/libraries/threads.zip *.scad LICENSE.txt )
 
 libs/smooth-prim: 
 	git clone --recurse https://github.com/rcolyer/smooth-prim.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
-build/smooth-prim.zip: libs/smooth-prim
-	mkdir -p build
-	( cd libs/smooth-prim ; zip -r ../../build/smooth-prim.zip *.scad LICENSE.txt )
+build/libraries/smooth-prim.zip: libs/smooth-prim
+	mkdir -p build/libraries
+	( cd libs/smooth-prim ; zip -r ../../build/libraries/smooth-prim.zip *.scad LICENSE.txt )
 
 libs/plot-function: 
 	git clone --recurse https://github.com/rcolyer/plot-function.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
-build/plot-function.zip: libs/plot-function
-	mkdir -p build
-	( cd libs/plot-function ; zip -r ../../build/plot-function.zip *.scad LICENSE.txt )
+build/libraries/plot-function.zip: libs/plot-function
+	mkdir -p build/libraries
+	( cd libs/plot-function ; zip -r ../../build/libraries/plot-function.zip *.scad LICENSE.txt )
 
 libs/closepoints: 
 	git clone --recurse https://github.com/rcolyer/closepoints.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
-build/closepoints.zip: libs/closepoints
-	mkdir -p build
-	( cd libs/closepoints ; zip -r ../../build/closepoints.zip *.scad LICENSE.txt )
+build/libraries/closepoints.zip: libs/closepoints
+	mkdir -p build/libraries
+	( cd libs/closepoints ; zip -r ../../build/libraries/closepoints.zip *.scad LICENSE.txt )
 
-libs/openscad-tray: 
-	git clone --recurse https://github.com/sofian/openscad-tray.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
+libs/UB.scad: 
+	git clone --recurse https://github.com/UBaer21/UB.scad.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
 
-build/openscad-tray.zip: libs/openscad-tray
-	mkdir -p build
-	( cd libs/openscad-tray ; zip -r ../../build/openscad-tray.zip *.scad LICENSE.txt )
+build/libraries/UB.scad.zip: libs/UB.scad
+	mkdir -p build/libraries
+	( cd libs/UB.scad ; zip -r ../../build/libraries/UB.scad.zip libraries/*.scad LICENSE )
+
+# libs/openscad-tray: 
+# 	git clone --recurse https://github.com/sofian/openscad-tray.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
+
+# build/libraries/openscad-tray.zip: libs/openscad-tray
+# 	mkdir -p build/libraries
+# 	( cd libs/openscad-tray ; zip -r ../../build/libraries/openscad-tray.zip *.scad LICENSE.txt )
 
 build/openscad-worker-inlined.js: example/www/openscad-worker.js inline-openscad-worker.ts
 	deno run --allow-net --allow-read --allow-write inline-openscad-worker.ts

@@ -1,66 +1,10 @@
 import OpenSCAD from "./openscad.js";
 
 importScripts("https://cdnjs.cloudflare.com/ajax/libs/BrowserFS/2.0.0/browserfs.min.js");
+importScripts('filesystem.js');
 
-const zipArchives = [
-  // Mounted as /mnt/fonts then symlinked to /fonts below.
-  'fonts',
-  // @revarbat
-  'BOSL',
-  'BOSL2',
-  // @nophead
-  'NopSCADlib',
-  // @thehans
-  'FunctionalOpenSCAD',
-  'funcutils',
-  // @colyer
-  'smooth-prim',
-  'closepoints',
-  'plot-function',
-  // 'threads',
-  // @sofian
-  'openscad-tray',
-  // @mrWheel
-  'YAPP_Box',
-  // @Cantareus
-  'Stemfie_OpenSCAD',
-];
-
-const Buffer = BrowserFS.BFSRequire('buffer').Buffer;
-const fs = BrowserFS.BFSRequire('fs');
-
-async function initBrowserFS(zipArchives) {
-  
-  const fetchData = async url => (await fetch(url)).arrayBuffer();
-  
-  const results = await Promise.all(zipArchives.map(async n => [n, await fetchData(`${n}.zip`)]));
-  
-  const zipMounts = {};
-  for (const [n, zipData] of results) {
-    zipMounts[n] = {
-      fs: "ZipFS",
-      options: {
-        zipData: Buffer.from(zipData)
-      }
-    }
-  }
-  // const zipData = await (await fetch('./BOSL2.zip')).arrayBuffer();
-  
-  await new Promise((resolve, reject) => {
-    BrowserFS.install(self);
-    BrowserFS.configure({
-      fs: "MountableFileSystem",
-      options: {
-        ...zipMounts,
-        "/": { fs: "InMemory" },
-        // "/home": { fs: "IndexedDB" }
-      }
-    }, function (e) { if (e) reject(e); else resolve(); });
-  });
-
-}
-
-const browserFSInit = initBrowserFS(zipArchives);
+const allArchiveNames = Object.keys(zipArchives)
+const allZipMountsPromise = getBrowserFSLibrariesMounts(allArchiveNames);
 
 addEventListener('message', async (e) => {
 
@@ -81,32 +25,46 @@ addEventListener('message', async (e) => {
         mergedOutputs.push({ stderr: text })
       },
     });
+    
+    // await browserFSInit;
+    await new Promise(async (resolve, reject) => {
+      BrowserFS.install(self);
+      BrowserFS.configure({
+        fs: "MountableFileSystem",
+        options: {
+          ...await allZipMountsPromise,
+          // "/": { fs: "InMemory" },
+        }
+      }, function (e) { if (e) reject(e); else resolve(); });
+    });
 
-    // addFonts(instance);
+    const archiveNames = allArchiveNames;
 
-    instance.FS.mkdir('mnt');
-    instance.FS.chdir('/mnt');
+    // instance.FS.mkdir('tmp');    
+    instance.FS.mkdir('/tmp/run');    
+    instance.FS.mkdir('/libraries');
+
+    // await browserFSInit;
 
     // https://github.com/emscripten-core/emscripten/issues/10061
-    await browserFSInit;
     const BFS = new BrowserFS.EmscriptenFS(
       instance.FS,
       instance.PATH ?? {
         join2: (a, b) => `${a}/${b}`,
         join: (...args) => args.join('/'),
       }, instance.ERRNO_CODES ?? {});
-    instance.FS.mount(BFS, {root: '/'}, '/mnt');
+    instance.FS.mount(BFS, {root: '/'}, '/libraries');
 
-    instance.FS.symlink("/mnt/fonts", "/fonts");
-    // openscad.FS.writeFile("/fonts/fonts.conf", fromHex(config as string));
+    setupLibraries(archiveNames, instance.FS, '/libraries', '/tmp/run');
 
-    // instance.FS.readdirSync()
-
+    instance.FS.chdir('/tmp/run');
+    
     if (inputs) {
       for (const [path, content] of inputs) {
         instance.FS.writeFile(path, content);
       }
     }
+
     console.log('Calling main ', args)
     const start = performance.now();
     const exitCode = instance.callMain(args);

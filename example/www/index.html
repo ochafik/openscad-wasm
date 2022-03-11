@@ -6,20 +6,19 @@
 
   <link rel="prefetch" href="openscad.wasm">
   <link rel="prefetch" href="openscad-worker-inlined.js">
-  
-  <link rel="prefetch" href="fonts.zip">
-  <link rel="prefetch" href="BOSL.zip">
-  <link rel="prefetch" href="BOSL2.zip">
-  <link rel="prefetch" href="NopSCADlib.zip">
-  <link rel="prefetch" href="FunctionalOpenSCAD.zip">
-  <link rel="prefetch" href="funcutils.zip">
-  <link rel="prefetch" href="smooth-prim.zip">
-  <link rel="prefetch" href="closepoints.zip">
-  <link rel="prefetch" href="plot-function.zip">
-  <!-- <link rel="prefetch" href="threads.zip"> -->
-  <link rel="prefetch" href="openscad-tray.zip">
-  <link rel="prefetch" href="YAPP_Box.zip">
-  <link rel="prefetch" href="Stemfie_OpenSCAD.zip">
+
+  <link rel="prefetch" href="libraries/fonts.zip">
+  <link rel="prefetch" href="libraries/BOSL.zip">
+  <link rel="prefetch" href="libraries/BOSL2.zip">
+  <link rel="prefetch" href="libraries/NopSCADlib.zip">
+  <link rel="prefetch" href="libraries/FunctionalOpenSCAD.zip">
+  <link rel="prefetch" href="libraries/funcutils.zip">
+  <link rel="prefetch" href="libraries/smooth-prim.zip">
+  <link rel="prefetch" href="libraries/closepoints.zip">
+  <link rel="prefetch" href="libraries/plot-function.zip">
+  <link rel="prefetch" href="libraries/YAPP_Box.zip">
+  <link rel="prefetch" href="libraries/Stemfie_OpenSCAD.zip">
+  <link rel="prefetch" href="libraries/UB.scad.zip">
   
   <!-- <link rel="prefetch" href="rcolyer_threads.zip"> -->
 
@@ -45,6 +44,19 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.nls.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.js" defer></script>
+  <script>
+    (async() => {
+      if ('serviceWorker' in navigator) {
+        for (const reg of await navigator.serviceWorker.getRegistrations()) {
+          try {
+            reg.unregister()
+          } catch (e) {
+            console.error(e, e.stackTrace);
+          }
+        }
+      }
+    })();
+  </script>
   <!-- <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
     (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -210,8 +222,32 @@
         top: 50px;
         right: 0;
         bottom: 0;
-        height: calc(100vh - 55px);
+        /* height: calc(100vh - 55px); */
         width: 100vw;
+      }
+
+      #viewer {
+        height: calc(100vh - 55px);
+      }
+
+      #monacoEditor {
+        height: calc(70vh - 55px);
+      }
+
+      .logs-container {
+        position: absolute;
+        bottom: 0;
+        height: 30vh;
+        width: 100vw;
+        left: 0;
+        z-index: 1;
+        background-color: rgba(255,255,255,0.7) !important;
+      }
+      .logs-container pre {
+        color: rgba(50, 50, 50, 0.9);
+        font-family: Consolas, "Courier New", monospace;
+        font-weight: normal;
+        font-size: 12px;
       }
 
       .minimap.slider-mouseover {
@@ -229,19 +265,18 @@
       }
 
       #monacoEditor {
-        z-index: 1;
+        z-index: 2;
       }
       #viewer {
         z-index: 0;
       }
 
       #viewer.focused {
-        z-index: 2;
+        z-index: 3;
       }
 
       /* .settings, */
-      .features,
-      .logs-container
+      .features
       /* , .github-fork-ribbon */
        {
         display: none;

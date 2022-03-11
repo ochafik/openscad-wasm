@@ -179,8 +179,8 @@ const checkSyntax = turnIntoDelayableExecution(syntaxDelay, () => {
   const timestamp = Date.now();
 
   const job = spawnOpenSCAD({
-    inputs: [['/mnt/input.scad', source + '\n']],
-    args: ["/mnt/input.scad", "-o", "out.ast"],
+    inputs: [['input.scad', source + '\n']],
+    args: ["input.scad", "-o", "out.ast"],
   });
 
   return {
@@ -241,13 +241,13 @@ const render = turnIntoDelayableExecution(renderDelay, () => {
   
   const job = spawnOpenSCAD({
     // wasmMemory,
-    inputs: [['/mnt/input.scad', source]],
+    inputs: [['input.scad', source]],
     args: [
-      "/mnt/input.scad",
+      "input.scad",
       "-o", "out.stl",
       ...Object.keys(featureCheckboxes).filter(f => featureCheckboxes[f].checked).map(f => `--enable=${f}`),
     ],
-    outputPaths: ['/mnt/out.stl']
+    outputPaths: ['out.stl']
   });
 
   return {
