@@ -52,7 +52,7 @@ async function getBrowserFSLibrariesMounts(archiveNames) {
 
 function setupLibraries(archiveNames, FS, prefix='/libraries', cwd='/tmp') {
   const createSymlink = (target, source) => {
-    console.log('symlink', target, source);
+    // console.log('symlink', target, source);
     FS.symlink(target, source);
   };
 

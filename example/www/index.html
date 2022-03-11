@@ -234,6 +234,13 @@
         height: calc(70vh - 55px);
       }
 
+      #link-container {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        z-index: 4;
+      }
+
       .logs-container {
         position: absolute;
         bottom: 0;
@@ -329,22 +336,24 @@
       </div>
       <div class="text desktop">
       </div>
-      <div class="row text settings">
-        <button class="button" id="run">Render (Ctrl+Enter)</button>
-        <button class="button" id="kill" disabled>🚫</button>
+      <div class="row text">
+        <button class="button settings" id="run">Render (Ctrl+Enter)</button>
+        <button class="button settings" id="kill" disabled>🚫</button>
         
         <div class="text-fragment" id="link-container"></div>
-        <div class="text-fragment" id="meta"></div>
+        <div class="text-fragment settings" id="meta"></div>
 
-        <span class="spacer"></span>
+        <span class="spacer settings"></span>
 
-        <span class="text-fragment"><input type="checkbox" id="autorender" checked>Autorender</span>
-        <span class="text-fragment"><input type="checkbox" id="autoparse" checked>Autocheck</span>
-        <!-- <span class="text-fragment"><input type="number" min="16" max="2048" step="16" id="maximum-megabytes" value="512">MB</span> -->
+        <span class="text-fragment settings"><input type="checkbox" id="autorender" checked>Render</span>
+        <span class="text-fragment settings"><input type="checkbox" id="autoparse" checked>Check</span>
+        <span class="text-fragment settings"><input type="checkbox" id="autorotate" checked>Rotate</span>
+        <!-- <span class="text-fragment settings"><input type="checkbox" id="showedges" checked>Edges</span> -->
+        <!-- <span class="text-fragment settings"><input type="number" min="16" max="2048" step="16" id="maximum-megabytes" value="512">MB</span> -->
         
-        <span class="text-fragment"><input type="checkbox" id="show-experimental">Show experiments</span>
+        <span class="text-fragment settings"><input type="checkbox" id="show-experimental">Show experiments</span>
         
-        <span class="spacer"></span>
+        <span class="spacer settings"></span>
       </div>
       <div id="viewer" tabindex="0"></div>
       <span id="features" class="features"></span>

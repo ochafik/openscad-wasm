@@ -11,6 +11,8 @@ const metaElement = document.getElementById('meta');
 const linkContainerElement = document.getElementById('link-container');
 const autorenderCheckbox = document.getElementById('autorender');
 const autoparseCheckbox = document.getElementById('autoparse');
+const autorotateCheckbox = document.getElementById('autorotate');
+// const showedgesCheckbox = document.getElementById('showedges');
 const showExperimentalFeaturesCheckbox = document.getElementById('show-experimental');
 const stlViewerElement = document.getElementById("viewer");
 const logsElement = document.getElementById("logs");
@@ -52,7 +54,7 @@ function buildStlViewer() {
     stlViewer.set_auto_zoom(true);
     stlViewer.set_auto_resize(true);
     // stlViewer.set_auto_rotate(true);
-    // stlViewer.set_edges(id, true);
+    // stlViewer.set_edges(id, showedgesCheckbox.checked);
     // onStateChanged({allowRun: false});
   };    
   return stlViewer;
@@ -89,15 +91,18 @@ killButton.onclick = () => {
   }
 };
 
+function setAutoRotate(value) {
+  autorotateCheckbox.checked = value;
+  stlViewer.set_auto_rotate(value);
+}
+
 function setViewerFocused(value) {
   if (value) {
     flipModeButton.innerText = 'Edit ✍️';
     stlViewerElement.classList.add('focused');
-    stlViewer.set_auto_rotate(false);
   } else {
     flipModeButton.innerText = 'Interact 🤏';
     stlViewerElement.classList.remove('focused');
-    stlViewer.set_auto_rotate(true);
   }
 }
 function isViewerFocused() {
@@ -306,6 +311,8 @@ function getState() {
     },
     autorender: autorenderCheckbox.checked,
     autoparse: autoparseCheckbox.checked,
+    autorotate: autorotateCheckbox.checked,
+    // showedges: showedgesCheckbox.checked,
     // maximumMegabytes: Number(maximumMegabytesInput.value),
     features,
     viewerFocused: isViewerFocused(),
@@ -384,6 +391,10 @@ function setState(state) {
   }
   autorenderCheckbox.checked = state.autorender ?? true;
   autoparseCheckbox.checked = state.autoparse ?? true;
+  
+  // stlViewer.set_edges(1, showedgesCheckbox.checked = state.showedges ?? false);
+
+  setAutoRotate(state.autorotate ?? true)
   setViewerFocused(state.viewerFocused ?? false);
   updateExperimentalCheckbox(state.showExp ?? false);
 
@@ -448,7 +459,12 @@ try {
 
   stlViewer = buildStlViewer();
   // stlViewerElement.onclick = () => stlViewerElement.focus();
-  // stlViewerElement.ondblclick = () => {
+  stlViewerElement.ondblclick = () => {
+  // stlViewerElement.onclick = () => {
+    console.log("Tap detected!");
+    setAutoRotate(!autorotateCheckbox.checked);
+    onStateChanged({allowRun: false});
+  };
   //   try { stlViewer.remove_model(1); } catch (e) {}
   //   try { stlViewer.dispose(); } catch (e) {}
     
@@ -473,10 +489,16 @@ try {
 
   autorenderCheckbox.onchange = () => onStateChanged({allowRun: autorenderCheckbox.checked});
   autoparseCheckbox.onchange = () => onStateChanged({allowRun: autoparseCheckbox.checked});
-
+  autorotateCheckbox.onchange = () => onStateChanged({allowRun: false});
+  // showedgesCheckbox.onchange = () => onStateChanged({allowRun: false});
 
   flipModeButton.onclick = () => {
-    setViewerFocused(!isViewerFocused());
+    const wasViewerFocused = isViewerFocused();
+    setViewerFocused(!wasViewerFocused);
+
+    if (!wasViewerFocused) {
+      setAutoRotate(false);
+    }
     onStateChanged({allowRun: false});
   };
   // maximumMegabytesInput.oninput = () => {
