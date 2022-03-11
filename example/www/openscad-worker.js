@@ -59,12 +59,16 @@ addEventListener('message', async (e) => {
 
     instance.FS.chdir('/tmp/run');
     
+    // console.log('.', instance.FS.readdir('.'));
+    // console.log('fonts', instance.FS.readdir('fonts'));
+    // console.log('BOSL2', instance.FS.readdir('BOSL2'));
+
     if (inputs) {
       for (const [path, content] of inputs) {
         instance.FS.writeFile(path, content);
       }
     }
-
+    
     console.log('Calling main ', args)
     const start = performance.now();
     const exitCode = instance.callMain(args);

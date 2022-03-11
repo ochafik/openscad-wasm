@@ -33,11 +33,6 @@ const zipArchives = {
   },
 };
 
-// function readDir(fs_, path) {
-//   const fs = BrowserFS.BFSRequire('fs');
-//   return new Promise((resolve, reject) => fs.readdir(path, (err, files) => err ? reject(err) : resolve(files)));
-// }
-
 async function getBrowserFSLibrariesMounts(archiveNames) {
   const Buffer = BrowserFS.BFSRequire('buffer').Buffer;
   const fetchData = async url => (await fetch(url)).arrayBuffer();
@@ -55,15 +50,15 @@ async function getBrowserFSLibrariesMounts(archiveNames) {
   return zipMounts;
 }
 
-async function setupLibraries(archiveNames, FS, prefix='/libraries', cwd='/tmp') {
+function setupLibraries(archiveNames, FS, prefix='/libraries', cwd='/tmp') {
   const createSymlink = (target, source) => {
     console.log('symlink', target, source);
     FS.symlink(target, source);
   };
 
   for (const n of archiveNames) {
-    if (!(n in await zipArchives)) throw `Archive named ${n} invalid (valid ones: ${Object.keys(zipArchives).join(', ')})`;
-    const {symlinks} = (await zipArchives)[n];
+    if (!(n in zipArchives)) throw `Archive named ${n} invalid (valid ones: ${Object.keys(zipArchives).join(', ')})`;
+    const {symlinks} = (zipArchives)[n];
     if (symlinks) {
       for (const from in symlinks) {
         const to = symlinks[from];
