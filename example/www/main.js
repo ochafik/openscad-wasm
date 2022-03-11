@@ -119,6 +119,7 @@ function processMergedOutputs(editor, mergedOutputs, timestamp) {
   lastProcessedOutputsTimestamp = timestamp;
 
   let unmatchedLines = [];
+  let allLines = [];
 
   const markers = [];
   let warningCount = 0, errorCount = 0;
@@ -133,6 +134,7 @@ function processMergedOutputs(editor, mergedOutputs, timestamp) {
     })
   }
   for (const {stderr, stdout, error} of mergedOutputs){
+    allLines.push(stderr ?? stdout ?? `EXCEPTION: ${error}`);
     if (stderr) {
       if (stderr.startsWith('ERROR:')) errorCount++;
       if (stderr.startsWith('WARNING:')) warningCount++;
@@ -168,7 +170,9 @@ function processMergedOutputs(editor, mergedOutputs, timestamp) {
     unmatchedLines.push(stderr ?? stdout ?? `EXCEPTION: ${error}`);
   }
   if (errorCount || warningCount) unmatchedLines = [`${errorCount} errors, ${warningCount} warnings!`, '', ...unmatchedLines];
-  logsElement.innerText = unmatchedLines.join("\n")
+
+  logsElement.innerText = allLines.join("\n")
+  // logsElement.innerText = unmatchedLines.join("\n")
   
   monaco.editor.setModelMarkers(editor.getModel(), 'openscad', markers);
 }
@@ -331,7 +335,19 @@ function normalizeStateForCompilation(state) {
 const defaultState = {
   source: {
     name: 'input.stl',
-    content: 'cube(1);\ntranslate([0.5, 0.5, 0.5])\n\tcube(1);',
+    content: `translate([-50, 0, 50])
+  linear_extrude(10)
+    text("hello world!");
+        
+cube(40, center=true);
+translate([10, 10, 10])
+  cube(40, center=true);
+  
+// This demo includes many libraries:
+//
+// include <BOSL2/std.scad>
+// spheroid(d=100, style="icosa", $fn=20);
+`
   },
   maximumMegabytes: 1024,
   viewerFocused: false,
