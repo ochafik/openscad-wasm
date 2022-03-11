@@ -13,44 +13,39 @@ Please file an issue if you think a license or credits are missing or misreprese
 
 The WASM build was made possible by https://github.com/DSchroer/openscad-wasm.
 
+* [OpenSCAD Web Demo](#openscad-web-demo)
 * [Monaco Editor](#monaco-editor)
 * [Viewstl Plugin](#viewstl-plugin)
 * [Three.js](#threejs)
-* [Liberation Fonts](#liberation-fonts)
-* [SCAD Libraries](#scad-libraries)
-  + [revarbat/BOSL & revarbat/BOSL2](#revarbat-bosl---revarbat-bosl2)
-  + [nophead/NopSCADlib](#nophead-nopscadlib)
-  + [thehans/FunctionalOpenSCAD](#thehans-functionalopenscad)
-  + [thehans/funcutils](#thehans-funcutils)
-  + [rcolyer/smooth-prim](#rcolyer-smooth-prim)
-  + [rcolyer/closepoints](#rcolyer-closepoints)
-  + [rcolyer/plot-function](#rcolyer-plot-function)
-  + [YAPP_Box](#yapp-box)
-  + [Stemfie_OpenSCAD](#stemfie-openscad)
-  + [UB.scad](#ubscad)
 * [Boost](#boost)
 * [GNU MPFR](#gnu-mpfr)
 * [GNU MP](#gnu-mp)
 * [OpenSCAD](#openscad)
 * [CGAL](#cgal)
-* [Eigen (3.x)](#eigen--3x-)
-* [glib2 (2.x)](#glib2--2x-)
-* [fontconfig (2.10 -> )](#fontconfig--210-----)
-* [freetype2 (2.4 -> )](#freetype2--24-----)
-* [harfbuzz (0.9.19 -> )](#harfbuzz--0919-----)
+* [Eigen](#eigen)
+* [glib2](#glib2)
+* [fontconfig](#fontconfig)
+* [freetype2](#freetype2)
+* [harfbuzz](#harfbuzz)
 * [libzip](#libzip)
 * [Bison](#bison)
-* [Flex (2.5.35 -> )](#flex--2535-----)
-* [double-conversion (2.0.1 -> )](#double-conversion--201-----)
-* [Common licenses](#common-licenses)
-  + [GPLv2](#gplv2)
-  + [GPLv3](#gplv3)
-  + [LGPLv2.1](#lgplv21)
-  + [LGPLv3](#lgplv3)
-  + [CC0 1.0 Universal](#cc0-10-universal)
-  + [SIL 1.1](#sil-11)
-  + [FTL](#ftl)
-  + [MPLv2](#mplv2)
+* [Flex](#flex)
+* [double-conversion](#double-conversion)
+* [Liberation Fonts](#liberation-fonts)
+* [SCAD Libraries](#scad-libraries)
+  + [BOSL2](#bosl2)
+  + [NopSCADlib](#nopscadlib)
+  + [FunctionalOpenSCAD](#functionalopenscad)
+  + [funcutils](#funcutils)
+  + [smooth-prim](#smooth-prim)
+  + [closepoints](#closepoints)
+  + [plot-function](#plot-function)
+  + [YAPP_Box](#yapp-box)
+  + [Stemfie_OpenSCAD](#stemfie-openscad)
+  + [UB.scad](#ubscad)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 
 ## Monaco Editor
 
@@ -146,7 +141,7 @@ Licensed under the [SIL Open Font License, Version 1.1](#sil-11)
 
 Zip archives of the following libraries are loaded lazily by the demo.
 
-### revarbat/BOSL & revarbat/BOSL2
+### BOSL2
 
 https://github.com/revarbat/BOSL
 https://github.com/revarbat/BOSL2
@@ -179,13 +174,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-### nophead/NopSCADlib
+### NopSCADlib
 
 https://github.com/nophead/NopSCADlib
 
 Licensed under the [GPLv3](#gplv3).
 
-### thehans/FunctionalOpenSCAD
+### FunctionalOpenSCAD
 
 https://github.com/thehans/FunctionalOpenSCAD
 
@@ -213,25 +208,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### thehans/funcutils
+### funcutils
 
 https://github.com/thehans/funcutils
 
 Licensed under the [CC0 1.0 Universal](#cc0-1.0-universal).
 
-### rcolyer/smooth-prim
+### smooth-prim
 
 https://github.com/rcolyer/smooth-prim
 
 Licensed under the [CC0 1.0 Universal](#cc0-1.0-universal).
 
-### rcolyer/closepoints
+### closepoints
 
 https://github.com/rcolyer/closepoints
 
 Licensed under the [CC0 1.0 Universal](#cc0-1.0-universal).
 
-### rcolyer/plot-function
+### plot-function
 
 https://github.com/rcolyer/plot-function
 
@@ -342,19 +337,19 @@ https://github.com/CGAL/cgal
 
 Licensed under [GNU GPLv3](#gplv3) or later (note: some headers use the more permissive [GNU LGPLv3](#lgplv3) or later).
 
-## Eigen (3.x)
+## Eigen
 
 https://eigen.tuxfamily.org/
 
 Licensed under the [MPLv2](#mplv2) (starting from the 3.1.1 version; before it was under the [LGPLv3](#lgplv3) or later).
 
-## glib2 (2.x)
+## glib2
 
 https://developer.gnome.org/glib/
 
 Licensed under the [GNU LGPLv2.1](#lgplv21) or later.
 
-## fontconfig (2.10 -> )
+## fontconfig
 
 https://fontconfig.org/
 
@@ -561,13 +556,13 @@ fontconfig/src/ftglue.[ch]
  */
  ```
 
-## freetype2 (2.4 -> )
+## freetype2
 
 https://freetype.org/
 
 Dual-licensed under the [The FreeType License (FTL)](#ftl) (compatible with the [GPLv3](#gplv3)) and the [GNU GPLv2](#gplv2).
 
-## harfbuzz (0.9.19 -> )
+## harfbuzz
 
 https://www.freedesktop.org/wiki/Software/HarfBuzz/
 
@@ -640,7 +635,7 @@ https://www.gnu.org/software/bison/
 
 Licensed under the [GNU GPLv3](#gplv3) or later.
 
-## Flex (2.5.35 -> )
+## Flex
 
 https://github.com/westes/flex
 
@@ -689,7 +684,7 @@ You are free to do whatever you please with scanners generated using flex;
 for them, you are not even bound by the above copyright.
 ```
 
-## double-conversion (2.0.1 -> )
+## double-conversion
 
 https://github.com/google/double-conversion/
 
