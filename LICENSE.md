@@ -13,7 +13,6 @@ Please file an issue if you think a license or credits are missing or misreprese
 
 The WASM build was made possible by https://github.com/DSchroer/openscad-wasm.
 
-* [OpenSCAD Web Demo](#openscad-web-demo)
 * [Monaco Editor](#monaco-editor)
 * [Viewstl Plugin](#viewstl-plugin)
 * [Three.js](#threejs)
