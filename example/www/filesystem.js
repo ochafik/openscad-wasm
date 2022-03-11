@@ -2,7 +2,11 @@ const zipArchives = {
   'fonts': {},
   // @revarbat
   'BOSL': {},
-  'BOSL2': {},
+  'BOSL2': {
+    // "includes": {
+    //   "BOSL2/std.scad": "The Belfry OpenScad Library, v2.0. An OpenSCAD library of shapes, masks, and manipulators to make working with OpenSCAD easier. BETA"
+    // }
+  },
   // @nophead
   'NopSCADlib': {},
   // @thehans
