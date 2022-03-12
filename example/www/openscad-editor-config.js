@@ -1,9 +1,39 @@
 
+function readDir(fs, path) {
+  return new Promise((res, rej) => fs.readdir(path, (err, files) => err ? rej(err) : res(files)));
+}
+
 // https://microsoft.github.io/monaco-editor/playground.html#extending-language-services-custom-languages
-export async function registerOpenSCADLanguage() {
+export async function registerOpenSCADLanguage(fs, workingDir, zipArchives) {
   const [jsLanguage] = monaco.languages.getLanguages().filter(l => l.id === 'javascript');
-  const {conf, language} = await jsLanguage.loader();
-  
+  const { conf, language } = await jsLanguage.loader();
+
+  const builtInFunctionNames = [
+    'abs',
+      'acos', 'asin', 'atan', 'atan2', 'ceil',
+      'len', 'let', 'ln', 'log',
+      'lookup', 'max', 'min', 'sqrt', 'tan', 'rands',
+      'search', 'sign', 'sin', 'str', 'norm', 'pow', 
+      'concat', 'cos', 'cross', 'floor', 'exp', 
+      'chr',
+  ];
+  const builtInModuleNames = [
+    '$children', 'children',
+    'circle', 'color', 'cube', 'cylinder',
+    'diameter', 'difference', 'echo', 'extrude', 
+    'for', 'function', 'hull', 'if', 'include',
+    'intersection_for', 'intersection',  'linear',  'minkowski', 'mirror', 'module', 'multmatrix',
+    'offset', 'polyhedron', 'projection', 'radius', 
+    'render', 'resize', 'rotate', 'round', 'scale', 
+    'sphere', 'square', 'surface', 'translate', 
+    'union', 'use', 'value', 'version', 
+    // 'center', 'width', 'height', 
+  ];
+  const builtInVarNames = [
+    'false', 'true', 'PI', 'undef',
+    '$fa', '$fn', '$fs', '$t', '$vpd', '$vpr', '$vpt',
+  ]
+
   monaco.languages.register({ id: 'openscad' })
   monaco.languages.setLanguageConfiguration('openscad', conf);
   monaco.languages.setMonarchTokensProvider('openscad', {
@@ -11,23 +41,11 @@ export async function registerOpenSCADLanguage() {
     languageId: 'openscad',
     operators: [
       '<=', '<', '>=', '>', '==', '!=',
-      '+', '-', '*', '/', '%', '^', 
+      '+', '-', '*', '/', '%', '^',
       '!', '&&', '||', '?', ':',
       '=',
     ],
-    keywords: [
-      '$children', '$fa', '$fn', '$fs', '$t', '$vpd', '$vpr', '$vpt', 'abs',
-       'acos', 'asin', 'atan', 'atan2', 'ceil', 'center', 'children', 'chr',
-        'circle', 'color', 'concat', 'cos', 'cross', 'cube', 'cylinder', 
-        'diameter', 'difference', 'echo', 'exp', 'extrude', 'false', 'floor', 
-        'for', 'function', 'height', 'hull', 'if', 'import', 'include', 
-        'intersection_for', 'intersection', 'len', 'let', 'linear', 'ln', 'log', 
-        'lookup', 'max', 'min', 'minkowski', 'mirror', 'module', 'multmatrix', 
-        'norm', 'offset', 'polyhedron', 'pow', 'projection', 'radius', 'rands', 
-        'render', 'resize', 'rotate', 'round', 'scale', 'search', 'sign', 'sin', 
-        'sphere', 'sqrt', 'square', 'str', 'surface', 'tan', 'translate', 'true', 
-        'union', 'use', 'value', 'version num', 'version', 'width', 'undef', 'PI',
-    ],
+    keywords: [...builtInFunctionNames, ...builtInModuleNames, ...builtInVarNames],
   });
 
   function cleanupVariables(snippet) {
@@ -37,9 +55,10 @@ export async function registerOpenSCADLanguage() {
       .replaceAll(/\s+/g, ' ')
       .trim();
   }
-  
+
   const functionSnippets = [
     ...['union', 'intersection', 'difference', 'hull', 'minkowski'].map(n => `${n}() \$0`),
+    'include ',
     'translate([${1:tx}, ${2:ty}, ${3:tz}]) $4',
     'scale([${1:sx}, ${2:sy}, ${3:sz}]) $4',
     'rotate([${1:deg_x}, ${2:deg_y}, ${3:deg_z}]) $4',
@@ -59,36 +78,163 @@ export async function registerOpenSCADLanguage() {
     'polyhedron(points=${1:points}, faces=${2:faces});',
     'polygon(points=${1:points}, paths=${2:paths});',
   ];
-  
+
   const keywordSnippets = [
     'for(${1:variable}=[${2:start}:${3:end}) ${4:body}',
     'for(${1:variable}=[${2:start}:${3:increment}:${4:end}) ${5:body}',
     'if (${1:condition}) {\n\t$0\n} else {\n\t\n}'
   ];
 
-  const staticSuggestions = [
-    {
-      label: '$fn',
-      kind: monaco.languages.CompletionItemKind.Text,
-      insertText: '\\$fn='
-    },
-    ...functionSnippets.map(snippet => ({
-      label: cleanupVariables(snippet).replaceAll(/ children/g, ''),
-      kind: monaco.languages.CompletionItemKind.Function,
-      insertText: snippet,
-      insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-    })),
-    ...keywordSnippets.map(snippet => ({
-      label: cleanupVariables(snippet).replaceAll(/ body/g, ''),
-      kind: monaco.languages.CompletionItemKind.Keyword,
-      insertText: snippet,
-      insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
-    })),
-  ];
+  function getStatementSuggestions() {
+    return [
+      {
+        label: '$fn',
+        kind: monaco.languages.CompletionItemKind.Text,
+        insertText: '$fn='
+      },
+      ...functionSnippets.map(snippet => ({
+        label: cleanupVariables(snippet).replaceAll(/ children/g, ''),
+        kind: monaco.languages.CompletionItemKind.Function,
+        insertText: snippet,
+        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+      })),
+      ...keywordSnippets.map(snippet => ({
+        label: cleanupVariables(snippet).replaceAll(/ body/g, ''),
+        kind: monaco.languages.CompletionItemKind.Keyword,
+        insertText: snippet,
+        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+      })),
+    ];
+  }
+
+  const allSymlinks = [];
+  for (const n of Object.keys(zipArchives)) {
+    if (n == 'fonts') {
+      continue;
+    }
+    const { symlinks } = zipArchives[n];
+    for (const s in symlinks) {
+      allSymlinks.push(s);
+    }
+  }
 
   monaco.languages.registerCompletionItemProvider('openscad', {
-    provideCompletionItems: () => ({
-      suggestions: [...staticSuggestions]
-    })
+    triggerCharacters: ["<", "/"], //, "\n"],
+    provideCompletionItems: async (model, position, context, token) => {
+      try {
+        const offset = model.getOffsetAt(position);
+        const text = model.getValue();
+        let previous = text.substring(0, offset);
+        let i = previous.lastIndexOf('\n');
+        previous = previous.substring(i + 1);
+
+        const includeMatch = /\b(include|use)\s*<([^<>\n"]*)$/.exec(previous);
+        if (includeMatch) {
+          const prefix = includeMatch[2];
+          let folder, filePrefix, folderPrefix;
+          const i = prefix.lastIndexOf('/');
+          if (i < 0) {
+            folderPrefix = '';
+            filePrefix = prefix;
+          } else {
+            folderPrefix = prefix.substring(0, i);
+            filePrefix = prefix.substring(i + 1);
+          }
+          folder = workingDir + (folderPrefix == '' ? '' : '/' + folderPrefix);
+          let files = folderPrefix == '' ? [...allSymlinks] : [];
+          try {
+            files = [...await readDir(fs, folder), ...files];
+            // console.log('readDir', folder, files);
+          } catch (e) {
+            console.error(e);
+          }
+
+          const suggestions = [];
+          for (const file of files) {
+            if (filePrefix != '' && !file.startsWith(filePrefix)) {
+              continue;
+            }
+            if (/^(LICENSE.*|fonts)$/.test(file)) {
+              continue;
+            }
+            if (folderPrefix == '' && (file in zipArchives) && zipArchives[file].symlinks) {
+              continue;
+            }
+            const isFolder = !file.endsWith('.scad');
+            const completion = file + (isFolder ? '' : '>\n'); // don't append '/' as it's a useful trigger char
+
+            console.log(JSON.stringify({
+              prefix,
+              folder,
+              filePrefix,
+              folderPrefix,
+              // files,
+              completion,
+              file,
+            }, null, 2));
+
+            suggestions.push({
+              label: file,
+              kind: isFolder ? monaco.languages.CompletionItemKind.Folder : monaco.languages.CompletionItemKind.File,
+              insertText: completion
+            });
+          }
+          suggestions.sort();
+
+          return { suggestions };
+        }
+
+        const previousWithoutComments = previous.replaceAll(/\/\*.*?\*\/|\/\/.*?$/gm, '');
+        console.log('previousWithoutComments', previousWithoutComments);
+        const statementMatch = /(^|.*?[{});]|>\s*\n)\s*(\w*)$/m.exec(previousWithoutComments);
+        if (statementMatch) {
+          const start = statementMatch[1];
+          const suggestions = getStatementSuggestions().filter(s => start == '' || s.insertText.indexOf(start) >= 0);
+          suggestions.sort((a, b) => a.insertText.indexOf(start) < b.insertText.indexOf(start));
+          return { suggestions };
+        }
+
+        const {word} = model.getWordUntilPosition(position);
+        const allWithoutComments = text.replaceAll(/\/\*.*?\*\/|\/\/.*?$/gm, '');
+        function* getVarNames() {
+          yield *builtInVarNames;
+          for (const m of allWithoutComments.matchAll(/\b(\w+)\s*=/g)) {
+            yield m[1];
+          }
+        }
+        function* getFunctionNames() {
+          yield *builtInFunctionNames;
+          for (const m of allWithoutComments.matchAll(/\bfunction\s+(\w+)\b/g)) {
+            yield m[1];
+          }
+        }
+        function* getModuleNames() {
+          yield *builtInModuleNames;
+          for (const m of allWithoutComments.matchAll(/\bmodule\s+(\w+)\b/g)) {
+            yield m[1];
+          }
+        }
+        function* getExpressions() {
+          yield *getVarNames();
+          yield *getFunctionNames();
+        }
+        const names = [];
+        for (const name of getExpressions ()) {
+          if (word == '' || name.indexOf(word) >= 0) {
+            names.push(name);
+          }
+        }
+        names.sort((a, b) => a.indexOf(word) < b.indexOf(word));
+        const suggestions = names.map(name => ({
+          label: name,
+          kind: monaco.languages.CompletionItemKind.Constant,
+          insertText: name
+        }));
+        return { suggestions };
+      } catch (e) {
+        console.error(e, e.stackTrace);
+        return { suggestions: [] };
+      }
+    },
   });
 }

@@ -440,7 +440,13 @@ function pollCameraChanges() {
 }
 
 try {
-  await registerOpenSCADLanguage();
+  const workingDir = '/home';
+  const fs = await createEditorFS(workingDir);
+  await registerOpenSCADLanguage(fs, workingDir, zipArchives);
+
+  // const readDir = path => new Promise((res, rej) => fs.readdir(path, (err, files) => err ? rej(err) : res(files)));
+  // console.log('readDir', '/', await readDir('/'));
+  // console.log('readDir', workingDir, await readDir(workingDir));
 
   editor = monaco.editor.create(editorElement, {
     // value: source,
@@ -489,7 +495,10 @@ try {
 
   autorenderCheckbox.onchange = () => onStateChanged({allowRun: autorenderCheckbox.checked});
   autoparseCheckbox.onchange = () => onStateChanged({allowRun: autoparseCheckbox.checked});
-  autorotateCheckbox.onchange = () => onStateChanged({allowRun: false});
+  autorotateCheckbox.onchange = () => {
+    stlViewer.set_auto_rotate(autorotateCheckbox.checked);
+    onStateChanged({allowRun: false});
+  };
   // showedgesCheckbox.onchange = () => onStateChanged({allowRun: false});
 
   flipModeButton.onclick = () => {

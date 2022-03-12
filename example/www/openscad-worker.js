@@ -55,7 +55,7 @@ addEventListener('message', async (e) => {
       }, instance.ERRNO_CODES ?? {});
     instance.FS.mount(BFS, {root: '/'}, '/libraries');
 
-    setupLibraries(archiveNames, instance.FS, '/libraries', '/tmp/run');
+    await symlinkLibraries(archiveNames, instance.FS, '/libraries', '/tmp/run');
 
     instance.FS.chdir('/tmp/run');
     
@@ -69,7 +69,7 @@ addEventListener('message', async (e) => {
       }
     }
     
-    console.log('Calling main ', args)
+    console.debug('Calling main ', args)
     const start = performance.now();
     const exitCode = instance.callMain(args);
     const end = performance.now();
@@ -81,7 +81,7 @@ addEventListener('message', async (e) => {
       elapsedMillis: end - start
     }
 
-    console.log(result);
+    console.debug(result);
 
     postMessage(result);
   } catch (e) {

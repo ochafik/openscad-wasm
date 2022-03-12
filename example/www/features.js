@@ -15,7 +15,7 @@ export async function detectFeatures() {
 
 export async function buildFeatureCheckboxes(container, checkboxes, onchange) {
   const features = await detectFeatures();
-  console.log("Detected experimental features: ", features)
+  console.debug("Detected experimental features: ", features)
 
   for (const feature of features) {
     const span = Object.assign(document.createElement('span'), {
