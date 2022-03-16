@@ -1,5 +1,7 @@
 const zipArchives = {
   'fonts': {},
+  // @openscad
+  'MCAD': {},
   // @revarbat
   'BOSL': {},
   'BOSL2': {

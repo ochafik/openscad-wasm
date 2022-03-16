@@ -20,6 +20,7 @@ example: \
 		build/libraries/funcutils.zip \
 		build/libraries/FunctionalOpenSCAD.zip \
 		build/libraries/YAPP_Box.zip \
+		build/libraries/MCAD.zip \
 		build/libraries/smooth-prim.zip \
 		build/libraries/plot-function.zip \
 		build/libraries/closepoints.zip \
@@ -190,6 +191,13 @@ libs/YAPP_Box:
 build/libraries/YAPP_Box.zip: libs/YAPP_Box
 	mkdir -p build/libraries
 	( cd libs/YAPP_Box ; zip -r ../../build/libraries/YAPP_Box.zip *.scad LICENSE )
+
+libs/MCAD: 
+	git clone --recurse https://github.com/openscad/MCAD.git ${SHALLOW} ${SINGLE_BRANCH} $@
+
+build/libraries/MCAD.zip: libs/MCAD
+	mkdir -p build/libraries
+	( cd libs/MCAD ; zip -r ../../build/libraries/MCAD.zip *.scad bitmap/*.scad LICENSE )
 
 libs/Stemfie_OpenSCAD: 
 	git clone --recurse https://github.com/Cantareus/Stemfie_OpenSCAD.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@

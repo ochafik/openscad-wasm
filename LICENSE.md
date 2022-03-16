@@ -140,6 +140,12 @@ Licensed under the [SIL Open Font License, Version 1.1](#sil-11)
 
 Zip archives of the following libraries are loaded lazily by the demo.
 
+### MCAD
+
+https://github.com/openscad/MCAD
+
+Licensed under the [GNU LGPLv2.1](#lgplv21).
+
 ### BOSL2
 
 https://github.com/revarbat/BOSL
