@@ -26,9 +26,9 @@ const zipArchives = {
   },
   // 'threads': {},
   // @sofian
-  // 'openscad-tray': {
-  //   symlinks: {'tray.scad': 'tray.scad'},
-  // },
+  'openscad-tray': {
+    symlinks: {'tray.scad': 'tray.scad'},
+  },
   // @mrWheel
   'YAPP_Box': {},
   // @Cantareus

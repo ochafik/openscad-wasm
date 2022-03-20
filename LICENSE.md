@@ -237,6 +237,12 @@ https://github.com/rcolyer/plot-function
 
 Licensed under the [CC0 1.0 Universal](#cc0-1.0-universal).
 
+### openscad-tray
+
+https://github.com/sofian/openscad-tray
+
+Licensed under the [GNU GPL v3](#gplv3).
+
 ### YAPP_Box
 
 https://github.com/mrWheel/YAPP_Box

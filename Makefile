@@ -23,6 +23,7 @@ example: \
 		build/libraries/MCAD.zip \
 		build/libraries/smooth-prim.zip \
 		build/libraries/plot-function.zip \
+		build/libraries/openscad-tray.zip \
 		build/libraries/closepoints.zip \
 		build/libraries/Stemfie_OpenSCAD.zip \
 		build/libraries/UB.scad.zip
@@ -241,12 +242,12 @@ build/libraries/UB.scad.zip: libs/UB.scad
 	mkdir -p build/libraries
 	( cd libs/UB.scad ; zip -r ../../build/libraries/UB.scad.zip libraries/*.scad LICENSE )
 
-# libs/openscad-tray: 
-# 	git clone --recurse https://github.com/sofian/openscad-tray.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
+libs/openscad-tray: 
+	git clone --recurse https://github.com/sofian/openscad-tray.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
 
-# build/libraries/openscad-tray.zip: libs/openscad-tray
-# 	mkdir -p build/libraries
-# 	( cd libs/openscad-tray ; zip -r ../../build/libraries/openscad-tray.zip *.scad LICENSE.txt )
+build/libraries/openscad-tray.zip: libs/openscad-tray
+	mkdir -p build/libraries
+	( cd libs/openscad-tray ; zip -r ../../build/libraries/openscad-tray.zip *.scad LICENSE )
 
 build/openscad-worker-inlined.js: example/www/openscad-worker.js inline-openscad-worker.ts
 	deno run --allow-net --allow-read --allow-write inline-openscad-worker.ts
