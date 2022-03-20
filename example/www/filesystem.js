@@ -16,13 +16,13 @@ const zipArchives = {
   'funcutils': {},
   // @colyer
   'smooth-prim': {
-    symlinks: {'smooth-prim.scad': 'smooth-prim.scad'},
+    symlinks: {'smooth_prim.scad': 'smooth_prim.scad'},
   },
   'closepoints': {
     symlinks: {'closepoints.scad': 'closepoints.scad'},
   },
   'plot-function': {
-    symlinks: {'plot-function.scad': 'plot-function.scad'},
+    symlinks: {'plot_function.scad': 'plot_function.scad'},
   },
   // 'threads': {},
   // @sofian
