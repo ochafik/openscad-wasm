@@ -439,6 +439,27 @@ function pollCameraChanges() {
   }, 1000); // TODO only if active tab
 }
 
+const setTheme = ( () => {
+  let html = document.querySelector('html'),
+    select = document.querySelector('select#set-theme'),
+    theme = {
+      editor: ['vs', 'vs-dark'],
+      html: ['light', 'dark']
+    };
+  const getPrefersColor = () => (window.matchMedia('(prefers-color-scheme: dark)').matches) ? 1 : 0,
+    set = (value) => {
+      value = (isNaN(+value) || value > 1) ? 2 : +value
+      let scheme = (value > 1) ? getPrefersColor() : value
+      html.style.colorScheme = theme.html[scheme]
+      monaco.editor.setTheme(theme.editor[scheme])
+      window.localStorage.prefersColor = value
+      return {value, scheme}
+    };
+  select.value = set(window.localStorage.prefersColor ?? 2).value
+  select.oninput = () => set(select.value)
+  return set
+})();
+
 try {
   const workingDir = '/home';
   const fs = await createEditorFS(workingDir);

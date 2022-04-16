@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html class="monaco-editor">
 
 <head>
   <meta name="viewport" content="width=device-width, user-scalable=no" />
@@ -357,6 +357,15 @@
         <span class="text-fragment settings"><input type="checkbox" id="show-experimental">Show experiments</span>
         
         <span class="spacer settings"></span>
+
+        <span class="text-fragment settings">
+          <label for="set-theme">Theme:</label>
+          <select name="set-theme" id="set-theme">
+            <option value="2">OS</option>
+            <option value="1">Dark</option>
+            <option value="0">Light</option>
+          </select>
+        </span>
       </div>
       <div id="viewer" tabindex="0"></div>
       <span id="features" class="features"></span>
