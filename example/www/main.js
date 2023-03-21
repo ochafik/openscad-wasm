@@ -254,6 +254,7 @@ const render = turnIntoDelayableExecution(renderDelay, () => {
     args: [
       "input.scad",
       "-o", "out.stl",
+      "--export-format=binstl",
       ...Object.keys(featureCheckboxes).filter(f => featureCheckboxes[f].checked).map(f => `--enable=${f}`),
     ],
     outputPaths: ['out.stl']
