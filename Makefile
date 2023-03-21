@@ -40,7 +40,7 @@ DOCKER_FLAGS= --build-arg CMAKE_BUILD_TYPE=Debug --build-arg EMXX_FLAGS="-gsourc
 endif
 
 .PHONY: build
-build: build/openscad.js build/openscad.fonts.js
+build: build/openscad.wasm.js build/openscad.fonts.js
 
 build/openscad.fonts.js: runtime/node_modules runtime/**/* res res/liberation
 	mkdir -p build
@@ -50,15 +50,13 @@ build/openscad.fonts.js: runtime/node_modules runtime/**/* res res/liberation
 runtime/node_modules:
 	cd runtime; npm install
 
-build/openscad.js: .image.make
+build/openscad.wasm.js: .image.make
 	mkdir -p build
 	docker run --name tmpcpy openscad
-	docker cp tmpcpy:/build/openscad.js build/
+	docker cp tmpcpy:/build/openscad.js build/openscad.wasm.js
 	docker cp tmpcpy:/build/openscad.wasm build/
 	docker cp tmpcpy:/build/openscad.wasm.map build/ || true
 	docker rm tmpcpy
-
-	sed -i '1s&^&/// <reference types="./openscad.d.ts" />\n&' build/openscad.js
 
 .image.make: .base-image.make Dockerfile
 	docker build libs/openscad -f Dockerfile -t $(DOCKER_TAG_OPENSCAD) ${DOCKER_FLAGS}
@@ -92,17 +90,17 @@ SHALLOW=--depth 1
 
 libs/cgal:
 	git clone --recurse https://github.com/ochafik/cgal.git --branch interval-free-epeck --single-branch $@
-	# git clone https://github.com/CGAL/cgal.git ${SHALLOW} ${SINGLE_BRANCH} $@
+	# git clone https://github.com/CGAL/cgal.git ${SHALLOW} --branch 5.4.x-branch --single-branch $@
 
 libs/eigen:
 	git clone https://github.com/PX4/eigen.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
 libs/fontconfig:
-	git clone https://gitlab.freedesktop.org/fontconfig/fontconfig.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
+	git clone https://github.com/freedesktop/fontconfig.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
 	git -C $@ apply ../../patches/fontconfig.patch 
 
 libs/freetype:
-	git clone https://gitlab.freedesktop.org/freetype/freetype.git ${SHALLOW} ${SINGLE_BRANCH} $@
+	git clone https://github.com/freetype/freetype.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
 libs/glib:
 	git clone https://gist.github.com/acfa1c09522705efa5eb0541d2d00887.git ${SHALLOW} ${SINGLE_BRANCH} $@
@@ -121,7 +119,7 @@ libs/liblzma:
 	git clone https://github.com/kobolabs/liblzma.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
 libs/libzip:
-	git clone https://github.com/nih-at/libzip.git ${SHALLOW} ${SINGLE_BRANCH} $@
+	git clone https://github.com/nih-at/libzip.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
 
 libs/zlib:
 	git clone https://github.com/madler/zlib.git ${SHALLOW} ${SINGLE_BRANCH} $@
@@ -138,7 +136,6 @@ libs/openscad:
 
 libs/boost:
 	git clone --recurse https://github.com/boostorg/boost.git ${SHALLOW} ${SINGLE_BRANCH} $@
-	git -C $@/libs/filesystem apply ../../../../patches/boost-filesystem.patch
 
 libs/gmp-6.1.2:
 	wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.lz
@@ -146,7 +143,7 @@ libs/gmp-6.1.2:
 	rm gmp-6.1.2.tar.lz
 
 libs/mpfr-4.1.0:
-	wget  https://www.mpfr.org/mpfr-current/mpfr-4.1.0.tar.xz
+	wget  https://www.mpfr.org/mpfr-4.1.0/mpfr-4.1.0.tar.xz
 	tar xf mpfr-4.1.0.tar.xz -C libs
 	rm mpfr-4.1.0.tar.xz
 
@@ -261,7 +258,11 @@ build/site-dist.zip: build/openscad.js build/openscad-worker-inlined.js
 
 site: build/site-dist.zip
 res: \
-	res/liberation
+	res/liberation \
+	res/MCAD
 
 res/liberation:
 	git clone --recurse https://github.com/shantigilbert/liberation-fonts-ttf.git ${SHALLOW} ${SINGLE_BRANCH} $@
+
+res/MCAD:
+	git clone https://github.com/openscad/MCAD.git ${SHALLOW} ${SINGLE_BRANCH} $@
