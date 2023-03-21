@@ -485,6 +485,9 @@ try {
   };
 
   const initialState = readStateFromFragment() || defaultState;
+  if (initialState.features.indexOf('manifold') < 0) {
+    initialState.features.push('manifold');
+  }
   
   setState(initialState);
   await buildFeatureCheckboxes(featuresContainer, featureCheckboxes, () => {  
