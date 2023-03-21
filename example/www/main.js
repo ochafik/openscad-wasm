@@ -197,7 +197,7 @@ const checkSyntax = turnIntoDelayableExecution(syntaxDelay, () => {
     completion: (async () => {
       try {
         const result = await job;
-        console.log(result);
+        // console.log(result);
         processMergedOutputs(editor, result.mergedOutputs, timestamp);
       } catch (e) {
         console.error(e);
@@ -456,6 +456,7 @@ try {
     scrollBeyondLastLine: false,
     fontSize: 12,
     language: 'openscad',
+    wordBasedSuggestions: false,
   });
   editor.addAction({
     id: "run-openscad",

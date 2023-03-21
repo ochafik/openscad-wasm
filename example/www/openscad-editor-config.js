@@ -25,17 +25,19 @@ function makeFunctionoidSuggestion(name, mod) {
         collectingPosArgs = false;
       } else {
         //argSnippets.push(`${param.name}=${'${' + (i + 1) + ':' + param.name + '}'}`);
-        argSnippets.push(`${param.name}=${'${' + (i + 1) + ':' + param.name + '}'}`);
-        i++;
+        argSnippets.push(`${param.name}=${'${' + (++i) + ':' + param.name + '}'}`);
         continue;
       }
     }
     namedArgs.push(param.name);
   }
   if (namedArgs.length) {
-    argSnippets.push(`${'${' + (argSnippets.length + 1) + ':' + namedArgs.join('|') + '=}'}`);
+    argSnippets.push(`${'${' + (++i) + ':' + namedArgs.join('|') + '=}'}`);
   }
-  const insertText = `${name}(${argSnippets.join(', ')})`;
+  let insertText = `${name.replaceAll('$', '\\$')}(${argSnippets.join(', ')})`;
+  if (mod.referencesChildren !== null) {
+    insertText += mod.referencesChildren ? ' ${' + (++i) + ':children}' : ';';
+  }
   return {
     label: mod.signature,//`${name}(${(mod.params ?? []).join(', ')})`,
     kind: monaco.languages.CompletionItemKind.Function,
@@ -43,6 +45,30 @@ function makeFunctionoidSuggestion(name, mod) {
     insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
   };
 }
+
+
+const stripComments = src => src.replaceAll(/\/\*(.|[\s\S])*?\*\/|\/\/.*?$/gm, '');
+
+const builtinCompletions = [
+  // {
+  //   label: `$children`,
+  //   kind: monaco.languages.CompletionItemKind.Variable,
+  //   insertText: `$children`,
+  //   // insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+  // },
+  ...[true, false].map(v => ({
+    label: `${v}`,
+    kind: monaco.languages.CompletionItemKind.Value,
+    insertText: `${v}`,
+    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+  })),
+  ...['include', 'use'].map(v => ({
+    label: v,
+    kind: monaco.languages.CompletionItemKind.Function,
+    insertText: v,
+    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+  }))
+];
 
 const builtinSignatures = `
 $fa=undef;
@@ -112,8 +138,8 @@ module children() {}
 module render(convexity=undef) {}
 module surface(file, center=false, invert=false, convexity=undef) {}
 
-function assert(condition, message=undef) = $children;
-module assert(condition, message=undef) $children;
+function assert(condition, message=undef) = children();
+module assert(condition, message=undef) children();
 
 module cube(size, center=false) {}
 module sphere(r, d=undef, $fa, $fs, $fn) {}
@@ -123,27 +149,29 @@ module polyhedron(points, faces, convexity=undef) {}
 module square(size, center=false) {}
 module circle(r, d=undef, $fa, $fs, $fn) {}
 module polygon(points, paths, convexity=undef) {}
-module linear_extrude(height, center=false, twist=undef, slices=undef, scale=undef, convexity=undef) $children;
-module rotate_extrude(degrees, convexity=undef, $fa, $fs, $fn) $children;
+module linear_extrude(height, center=false, twist=undef, slices=undef, scale=undef, convexity=undef) children();
+module rotate_extrude(degrees, convexity=undef, $fa, $fs, $fn) children();
 
-module scale(v) $children;
-module resize(newsize, auto=false) $children;
-module rotate(a, v=undef) $children;
-module translate(v) $children;
-module mirror(v) $children;
-module multmatrix(m) $children;
+module scale(v) children();
+module resize(newsize, auto=false) children();
+module rotate(a, v=undef) children();
+module translate(v) children();
+module mirror(v) children();
+module multmatrix(m) children();
 
-module color(c, alpha) $children;
+module color(c, alpha) children();
 
-module offset(r, delta=undef, chamfer) $children;
+module offset(r, delta=undef, chamfer) children();
 
-module minkowski() $children;
-module union() $children;
-module difference() $children;
-module intersection() $children;
-module hull() $children;
+module minkowski() children();
+module union() children();
+module difference() children();
+module intersection() children();
+module hull() children();
 
-// module for(i=undef) $children;
+module children() {}
+
+// module for(i=undef) children();
 
 module import(file, convexity=undef, $fn, $fa, $fs) {}
 `;
@@ -195,7 +223,7 @@ export async function registerOpenSCADLanguage(fs, workingDir, zipArchives) {
 
   function cleanupVariables(snippet) {
     return snippet
-      .replaceAll(/\$\{\d+:(\w+)\}/g, '$1')
+      .replaceAll(/\$\{\d+:([$\w]+)\}/g, '$1')
       .replaceAll(/\$\d+/g, '')
       .replaceAll(/\s+/g, ' ')
       .trim();
@@ -265,8 +293,8 @@ export async function registerOpenSCADLanguage(fs, workingDir, zipArchives) {
   // console.log('allSymlinks', allSymlinks);
 
   function parse(path, src, skipPrivates) {
-    const withoutComments = src.replaceAll(/\/\*(.|[\s\S])*?\*\/|\/\/.*?$/gm, '');
-    const vars = {};
+    const withoutComments = stripComments(src);
+    const vars = [];
     const functions = {};
     const modules = {};
     const includes = [];
@@ -274,17 +302,21 @@ export async function registerOpenSCADLanguage(fs, workingDir, zipArchives) {
     for (const m of withoutComments.matchAll(/(use|include)\s*<([^>]+)>/g)) {
       (m[1] == 'use' ? uses : includes).push(m[2]);
     }
-    for (const m of withoutComments.matchAll(/(function|module)\s+(\w+)\s*\(([^)]*)\)/gm)) {
+    for (const m of withoutComments.matchAll(/(?:^|[{};])\s*([$\w]+)\s*=/g)) {
+      vars.push(m[1]);
+    }
+    for (const m of withoutComments.matchAll(/(function|module)\s+([$\w]+)\s*\(([^)]*)\)(?:\s*(?:=\s*)?(\{\}|[^{}]+?;))?/gm)) {
       const type = m[1];
       const name = m[2];
       if (skipPrivates && name.startsWith('_')) {
         continue;
       }
       const paramsStr = m[3];
+      const optBody = m[4];
       const params = [];
-      if (/^(\s*(\w+(\s*=[^,()[]+)?(\s*,\s*\w+(\s*=[^,()[]+)?)*)?\s*)$/m.test(paramsStr)) {
+      if (/^(\s*([$\w]+(\s*=[^,()[]+)?(\s*,\s*[$\w]+(\s*=[^,()[]+)?)*)?\s*)$/m.test(paramsStr)) {
         for (const paramStr of paramsStr.split(',')) {
-          const am = /^\s*(\w+)(?:\s*=([^,()[]+))?\s*$/.exec(paramStr);
+          const am = /^\s*([$\w]+)(?:\s*=([^,()[]+))?\s*$/.exec(paramStr);
           if (am) {
             const paramName = am[1];
             const defaultValue = am[2];
@@ -299,6 +331,7 @@ export async function registerOpenSCADLanguage(fs, workingDir, zipArchives) {
         path,
         signature: `${name}(${paramsStr.replaceAll(/[\s]+/gm, ' ').replaceAll(/\b | \b/g, '')})`,
         params,
+        referencesChildren: optBody != null ? (optBody.indexOf('children()') >= 0) : null,
       };
     }
     return {vars, functions, modules, includes, uses};
@@ -321,7 +354,7 @@ export async function registerOpenSCADLanguage(fs, workingDir, zipArchives) {
       const src = new TextDecoder("utf-8").decode(bytes);
       return src;
     } catch (e) {
-      console.error('Failed to read', path, e);
+      // console.error('Failed to read', path, e);
       throw e;
     }
   }
@@ -346,10 +379,10 @@ export async function registerOpenSCADLanguage(fs, workingDir, zipArchives) {
           ...(defs.modules ?? {}),
         }
         if (!isUse) {
-          result.vars = {
-            ...(result.vars ?? {}),
-            ...(defs.vars ?? {}),
-          }
+          result.vars = [
+            ...(result.vars ?? []),
+            ...(defs.vars ?? []),
+          ]
         }
       };
       const dir = (path.split('/').slice(0, -1).join('/') || '.') + '/';
@@ -361,7 +394,7 @@ export async function registerOpenSCADLanguage(fs, workingDir, zipArchives) {
             const sub = await getParsed(otherPath, otherSrc, {skipPrivates: true, addBuiltins: false});
             mergeDefinitions(isUse, sub);
           } catch (e) {
-            console.warn(path, e);
+            // console.warn(path, e);
           }
         }
         console.error('Failed to find ', otherPath, '(context imported in ', path, ')');
@@ -459,17 +492,26 @@ export async function registerOpenSCADLanguage(fs, workingDir, zipArchives) {
         delete parsedFiles[inputFile];
         const parsed = await getParsed(inputFile, text, {skipPrivates: false, addBuiltins: true});
         // console.log("PARSED", JSON.stringify(parsed, null, 2));
+        console.log("PARSED.vars", JSON.stringify(parsed.vars, null, 2));
+        console.log("word ", word);
         
-        const previousWithoutComments = previous.replaceAll(/\/\*(.|[\s\S])*?\*\/|\/\/.*?$/gm, '');
+        const previousWithoutComments = stripComments(previous);
         // console.log('previousWithoutComments', previousWithoutComments);
-        const statementMatch = /(^|.*?[{});]|>\s*\n)\s*(\w*)$/m.exec(previousWithoutComments);
+        const statementMatch = /(^|.*?[{});]|>\s*\n)\s*([$\w]*)$/m.exec(previousWithoutComments);
         if (statementMatch) {
           const start = statementMatch[1];
           const suggestions = [
+            ...builtinCompletions,
             ...mapObject(
               parsed.modules ?? {},
               (name, mod) => makeFunctionoidSuggestion(name, mod),
               name => name.indexOf(word) >= 0),
+            ...((parsed.vars ?? []).filter(name => name.indexOf(word) >= 0).map(name => ({
+              label: name,
+              kind: monaco.languages.CompletionItemKind.Variable,
+              insertText: name,
+              insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+            }))),
             ...keywordSnippets.map(snippet => ({
               label: cleanupVariables(snippet).replaceAll(/ body/g, ''),
               kind: monaco.languages.CompletionItemKind.Keyword,
@@ -482,7 +524,7 @@ export async function registerOpenSCADLanguage(fs, workingDir, zipArchives) {
           return { suggestions };
         }
 
-        const allWithoutComments = text.replaceAll(/\/\*(.|[\s\S])*?\*\/|\/\/.*?$/gm, '');
+        const allWithoutComments = stripComments(text);
         
         const named = [
           ...mapObject(parsed.functions ?? {},
