@@ -44,8 +44,6 @@ The WASM build was made possible by https://github.com/DSchroer/openscad-wasm.
   + [Stemfie_OpenSCAD](#stemfie-openscad)
   + [UB.scad](#ubscad)
 
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
 ## Manifold
 
 https://github.com/elalish/manifold
