@@ -359,7 +359,7 @@ translate([10, 10, 10])
   maximumMegabytes: 1024,
   viewerFocused: false,
   // maximumMegabytes: 512,
-  features: ['fast-csg', 'fast-csg-trust-corefinement', 'fast-csg-remesh', 'fast-csg-exact-callbacks', 'lazy-union'],
+  features: ['manifold', 'fast-csg', 'fast-csg-trust-corefinement', 'fast-csg-remesh', 'fast-csg-exact-callbacks', 'lazy-union'],
 };
 
 // var wasmMemory;

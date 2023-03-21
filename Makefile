@@ -132,6 +132,7 @@ libs/doubleconversion:
 
 libs/openscad:
 	git clone --recurse https://github.com/ochafik/openscad.git --branch unfiltered-lazy --single-branch $@
+	( cd submodules/manifold && git apply thrust.diff || true )
 	 #git clone --recurse https://github.com/ochafik/openscad.git --branch filtered-number --single-branch $@
 
 libs/boost:
@@ -252,7 +253,7 @@ build/openscad-worker-inlined.js: example/www/openscad-worker.js inline-openscad
 build/site-dist.zip: build/openscad.js build/openscad-worker-inlined.js
 	mkdir -p dist/openscad
 	cp build/openscad* dist/openscad
-	cp example/www/* dist/openscad
+	cp -R example/www/* dist/openscad
 	( cd dist && zip -r ../build/site-dist.zip openscad )
 	ls -l build/site-dist.zip
 

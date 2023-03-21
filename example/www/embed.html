@@ -40,7 +40,7 @@
     const inputName = name;
     const outputName = "out.stl";
     instance.FS.writeFile("/" + inputName, content);
-    instance.callMain(["/" + inputName, "-o", "/" + outputName, "--enable=fast-csg"]);
+    instance.callMain(["/" + inputName, "-o", "/" + outputName, "--enable=manifold"]);
     const output = await instance.FS.readFile("/" + outputName);
     const blob = new Blob([output], { type: "application/octet-stream" });
 
