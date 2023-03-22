@@ -25,7 +25,7 @@ function makeFunctionoidSuggestion(name, mod) {
         collectingPosArgs = false;
       } else {
         //argSnippets.push(`${param.name}=${'${' + (i + 1) + ':' + param.name + '}'}`);
-        argSnippets.push(`${param.name}=${'${' + (++i) + ':' + param.name + '}'}`);
+        argSnippets.push(`${param.name.replaceAll('$', '\\$')}=${'${' + (++i) + ':' + param.name + '}'}`);
         continue;
       }
     }
@@ -509,7 +509,7 @@ export async function registerOpenSCADLanguage(fs, workingDir, zipArchives) {
             ...((parsed.vars ?? []).filter(name => name.indexOf(word) >= 0).map(name => ({
               label: name,
               kind: monaco.languages.CompletionItemKind.Variable,
-              insertText: name,
+              insertText: name.replaceAll('$', '\\$'),
               insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
             }))),
             ...keywordSnippets.map(snippet => ({
