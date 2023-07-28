@@ -69,13 +69,13 @@ SINGLE_BRANCH=--branch master --single-branch
 SHALLOW=--depth 1
 
 libs/cgal:
-	git clone https://github.com/CGAL/cgal.git ${SHALLOW} --branch 5.4.x-branch --single-branch $@
+	git clone https://github.com/CGAL/cgal.git ${SHALLOW} --branch 5.6.x-branch --single-branch $@
 
 libs/eigen:
 	git clone https://github.com/PX4/eigen.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
 libs/fontconfig:
-	git clone https://github.com/freedesktop/fontconfig.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
+	git clone https://gitlab.freedesktop.org/fontconfig/fontconfig.git ${SHALLOW} ${SINGLE_BRANCH_MAIN} $@
 	git -C $@ apply ../../patches/fontconfig.patch 
 
 libs/freetype:
