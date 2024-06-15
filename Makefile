@@ -47,6 +47,7 @@ build/openscad.wasm.js: .image.make
 	touch $@
 
 libs: libs/cgal \
+	libs/assimp \
 	libs/eigen \
 	libs/fontconfig \
 	libs/freetype \
@@ -102,6 +103,9 @@ libs/libzip:
 
 libs/zlib:
 	git clone https://github.com/madler/zlib.git ${SHALLOW} ${SINGLE_BRANCH} $@
+
+libs/assimp:
+	git clone https://github.com/assimp/assimp.git ${SHALLOW} ${SINGLE_BRANCH} $@
 
 libs/libxml2:
 	git clone https://gitlab.gnome.org/GNOME/libxml2.git ${SHALLOW} ${SINGLE_BRANCH} $@
