@@ -30,7 +30,9 @@ RUN apt-get update \
     pkgconf \
     ninja-build \
     python3-pip \
-   && pip3 install git+https://github.com/kleisauke/meson@wasm-vips
+  && pip3 install \
+    meson \
+    packaging
 RUN chmod +x build.sh; ./build.sh
 
 
