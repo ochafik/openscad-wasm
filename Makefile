@@ -32,7 +32,7 @@ runtime/node_modules:
 
 build/openscad.wasm.js: .image.make
 	mkdir -p build
-	docker run --name tmpcpy openscad
+	docker run --name tmpcpy $(DOCKER_TAG_OPENSCAD)
 	docker cp tmpcpy:/build/openscad.js build/openscad.wasm.js
 	docker cp tmpcpy:/build/openscad.wasm build/
 	docker cp tmpcpy:/build/openscad.wasm.map build/ || true

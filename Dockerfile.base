@@ -101,8 +101,14 @@ RUN cd ../build && make && make install
 FROM emscripten/emsdk as assimp
 COPY --from=zlib /emsdk/upstream/emscripten/cache/sysroot /emsdk/upstream/emscripten/cache/sysroot
 COPY assimp . 
-RUN emcmake cmake -B ../build . -DCMAKE_BUILD_TYPE=Release
-RUN cd ../build && make && make install
+RUN emcmake cmake -B ../build . \
+  -DASSIMP_BUILD_ZLIB=0 \
+  -DBUILD_SHARED_LIBS=0 \
+  -DASSIMP_BUILD_TESTS=0 \
+  -DCMAKE_BUILD_TYPE=Release
+RUN cd ../build && make -j4 && make install
+RUN ln -s /emsdk/upstream/emscripten/cache/sysroot/lib/cmake/assimp{-*,}
+RUN ln -sf /emsdk/upstream/emscripten/cache/sysroot/lib/cmake/assimp/assimp{C,-c}onfig.cmake
 
 
 FROM emscripten/emsdk as openscad-base
